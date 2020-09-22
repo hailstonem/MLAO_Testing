@@ -30,10 +30,10 @@ if not DEBUG:
 
             if images_length > 0:
                 images_available = True
-            if round(time.time()-t0)%5 == 1:
+            if round(time.time()-t0)%10 == 9:
                 scanner.StopScan(Empty())
                 scanner.StartScan(Empty())
-                
+
         images = scanner.GetScanImages(Empty()).images
 
         # assert(len(images) == 1)

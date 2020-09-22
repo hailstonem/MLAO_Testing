@@ -1,5 +1,4 @@
 import os
-
 os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
@@ -7,23 +6,34 @@ import tensorflow as tf
 # from tensorflow.keras import backend as K
 import numpy as np
 
+
 import grpc
 
-from doptical.api.scanner_pb2_grpc import ScannerStub
-from doptical.api.scanner_pb2 import ZernikeModes
+from PySide2.QtWidgets import QApplication
 
-'''
-class ScannerStub:
-    ### dummy ScannerStub for testing###
-    def __init__(self, channel):
-        pass
+DEBUG=False
+if not DEBUG:
+    from doptical.api.scanner_pb2_grpc import ScannerStub
+    from doptical.api.scanner_pb2 import Empty, ZernikeModes, ScannerRange, ScannerPixelRange
 
-    def SetSLMZernikeModes(self, modes):
-        pass
+    def capture_image(scanner):
+        scanner.StartScan(Empty())
 
-    def GetAOCalibrationStack(self, list_of_aberrations_lists, pixel_size, image_dim):
-        return np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
-'''
+        images_available = False
+        while not images_available:
+            images_length = scanner.GetScanImagesLength(Empty()).length
+
+            if images_length > 0:
+                images_available = True
+
+        images = scanner.GetScanImages(Empty()).images
+
+        # assert(len(images) == 1)
+
+        image = images[0]
+
+        return_image = np.array(image.data).reshape(image.height,image.width)
+        return return_image
 
 def ML_estimate():
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value."""
@@ -52,14 +62,15 @@ def ML_estimate():
     ]  ### These modes are the ones the model returns (specific to model)
 
     channel = grpc.insecure_channel("localhost:50051")
-    client = ScannerStub(channel)
-
+    scanner = ScannerStub(channel)
+    
     # loop over each estimated mode and test to see if network estimates it
+    # corrections
     for mode in return_modes:
 
         """ ###Not sure if necessary to preset aberration or not###
         ZM = ZernikeModes(modes=[mode],amplitudes=[1])
-        client.SetSLMZernikeModes(modes)
+        scanner.SetSLMZernikeModes(modes)
         """
 
         ###TODO: Either use below code to make list of list of aberrations, or perhaps use list of ZernikeModes objects? depending on GetAOCalibrationStack
@@ -71,7 +82,24 @@ def ML_estimate():
         ###TODO: Rename Me, potentially edit signature####
         pixel_size = 0.1  ### TODO: set to ~2x Nyquist please
         image_dim = (128, 128)  # set as appropriate
-        stack = client.GetAOCalibrationStack(list_of_aberrations_lists, pixel_size, image_dim)
+        # image_dim = (500, 500)  # set as appropriate
+        # stack = scanner.GetAOCalibrationStack(list_of_aberrations_lists, pixel_size, image_dim)
+        
+        # Set up scan
+        scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1],y=image_dim[0]))
+
+        # Get stack of images
+        aberration_modes = [int(i) for i in range(len(list_of_aberrations_lists))]
+        stack = np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
+        for i_image, aberration in enumerate(list_of_aberrations_lists):
+            print(aberration)
+
+            ZM = ZernikeModes(modes=aberration_modes,amplitudes=aberration)
+            scanner.SetSLMZernikeModes(ZM)
+            image = capture_image(scanner)
+            stack[:,:,i_image] = image
+            time.sleep(1)
+        
 
         # format for CNN
         stack = stack[np.newaxis, :, :, :]

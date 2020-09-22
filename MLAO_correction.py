@@ -22,15 +22,18 @@ if not DEBUG:
 
     def capture_image(scanner):
         scanner.StartScan(Empty())
-
+        t0=time.time()
         images_available = False
         while not images_available:
-            time.sleep(0.2)
+            time.sleep(0.1)
             images_length = scanner.GetScanImagesLength(Empty()).length
 
             if images_length > 0:
                 images_available = True
-
+            if round(time.time()-t0)%5 == 1:
+                scanner.StopScan(Empty())
+                scanner.StartScan(Empty())
+                
         images = scanner.GetScanImages(Empty()).images
 
         # assert(len(images) == 1)

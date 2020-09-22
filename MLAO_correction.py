@@ -25,7 +25,7 @@ if not DEBUG:
 
         images_available = False
         while not images_available:
-            time.sleep(0.1)
+            time.sleep(0.2)
             images_length = scanner.GetScanImagesLength(Empty()).length
 
             if images_length > 0:
@@ -39,7 +39,7 @@ if not DEBUG:
 
         return_image = np.array(image.data).reshape(image.height,image.width)
         scanner.StopScan(Empty())
-        
+
         return return_image
 
 

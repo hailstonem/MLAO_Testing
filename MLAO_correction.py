@@ -38,6 +38,8 @@ if not DEBUG:
         image = images[0]
 
         return_image = np.array(image.data).reshape(image.height,image.width)
+        scanner.StopScan(Empty())
+        
         return return_image
 
 

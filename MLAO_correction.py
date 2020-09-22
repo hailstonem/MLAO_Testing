@@ -25,6 +25,7 @@ if not DEBUG:
 
         images_available = False
         while not images_available:
+            time.sleep(0.1)
             images_length = scanner.GetScanImagesLength(Empty()).length
 
             if images_length > 0:

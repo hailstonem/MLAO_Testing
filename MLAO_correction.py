@@ -25,14 +25,12 @@ if not DEBUG:
         t0=time.time()
         images_available = False
         while not images_available:
-            time.sleep(0.1)
+            time.sleep(2)
             images_length = scanner.GetScanImagesLength(Empty()).length
 
             if images_length > 0:
+                time.sleep(2)
                 images_available = True
-            if round(time.time()-t0)%10 == 9:
-                scanner.StopScan(Empty())
-                scanner.StartScan(Empty())
 
         images = scanner.GetScanImages(Empty()).images
 

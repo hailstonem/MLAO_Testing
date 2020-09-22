@@ -8,6 +8,8 @@ import tensorflow as tf
 # from tensorflow.keras import backend as K
 import numpy as np
 
+import tifffile
+import json
 
 import grpc
 
@@ -83,7 +85,7 @@ def ML_estimate():
         + "_savedmodel.h5",
         compile=False,
     )
-
+    rnd = np.random.randint(0,999)
     modes = [4, 5, 6, 7, 10]  ### Bias modes (specific to model)
     return_modes = [
         4,
@@ -152,6 +154,20 @@ def ML_estimate():
             model.predict((stack.astype("float") - stack.mean()) / stack.std())[0]
         )  # list of estimated modes
         #pred=[0]*len(return_modes)
+
+        with open('./results/%s_%s_coefficients.json'%(rnd,mode),'w') as cofile:
+                coeffs = {'Applied': dict(zip(return_modes, start_aberrations)), 'Estimated': dict(zip(return_modes, [float(p) for p in pred]))}
+                json.dump(coeffs,cofile,indent=1)
+
+        tifffile.imsave('./results/%s_%s_before.tif' % (rnd,mode), stack[:,:,0]) #rnd just there to make overwrites unlikely. #TODO: Replace with proper solution when we have a better idea of what we want to save
+        
+        start_aberrations = np.zeros((19))
+
+        scanner.SetSLMZernikeModes(ZM)
+        image = capture_image(scanner)
+
+        tifffile.imsave('./results/%s_%s_after.tif' % (rnd,mode), image) #rnd just there to make overwrites unlikely. Replace with proper solution when we have a better idea of what we want to save
+
 
         print("Mode " + str(mode) + " Applied = " + str(1))
         print(

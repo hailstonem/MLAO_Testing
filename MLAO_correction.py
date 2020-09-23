@@ -125,7 +125,8 @@ def ML_estimate(iterative_correct, scan):
             )  # rnd just there to make overwrites unlikely. Replace with proper solution when we have a better idea of what we want to save
 
             print("Mode " + str(mode) + " Applied = " + str(start_aberrations[mode-3]))
-            print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
+            if mode in return_modes:
+                print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
 
             start_aberrations[[m-3 for m in return_modes]] = start_aberrations[[m-3 for m in return_modes]] - pred
 

@@ -121,7 +121,7 @@ def ML_estimate(iterative_correct, scan):
             image = capture_image(scanner)
 
             tifffile.imsave(
-                "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), -image.astype('float32')/(image.min())
+                "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), image.astype('float32')/(image.min())
             )  # rnd just there to make overwrites unlikely. Replace with proper solution when we have a better idea of what we want to save
 
             print("Mode " + str(mode) + " Applied = " + str(start_aberrations[mode-3]))

@@ -126,10 +126,10 @@ def ML_estimate(iterative_correct, scan):
 
     # loop over each estimated mode and test to see if network estimates it
     # corrections
-    if scan:
+    if scan == -1:
         scan_modes = return_modes
     else:
-        scan_modes = [np.random.choice(return_modes)]
+        scan_modes = scan#[np.random.choice(return_modes)]
     print(scan_modes)
     for mode in scan_modes:
 
@@ -240,8 +240,7 @@ parser.add_argument(
 parser.add_argument("-iter", help="number of iterations", type=int)
 parser.add_argument(
     "-scan",
-    help="if true scans through modes and applies and estimates single mode aberration, otherwise corrects for a single aberration",
-    action="store_true",
+    help="if true scans through modes and applies and estimates single mode aberration, otherwise corrects for a single aberration", type=int
 )
 args = parser.parse_args()
 ML_estimate(args.iter, args.scan)

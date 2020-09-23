@@ -78,7 +78,7 @@ else:
             T = namedtuple('T',['length'])
             return T(1)
     def capture_image(scanner):
-        return np.zeros((scanner.y,scanner.x),dtype='uint16')
+        return np.zeros((scanner.y,scanner.x),dtype='uint16')#np.random.randint(0,65500,(scanner.y,scanner.x))#np.random.randint(0,65500,(scanner.y,scanner.x))
 
 def ML_estimate():
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value."""
@@ -155,7 +155,7 @@ def ML_estimate():
             stack = np.rot90(stack, axes=[1, 2])
 
         pred = list(
-            model.predict((stack.astype("float") - stack.mean()) / stack.std())[0]
+            model.predict(((stack.astype("float") - stack.mean()) / max(stack.astype("float").std(),0.001)))[0]
         )  # list of estimated modes
         #pred=[0]*len(return_modes)
 

@@ -164,7 +164,7 @@ def ML_estimate(iterative_correct, scan):
                 time.sleep(1)
 
             # format for CNN
-            stack = stack[np.newaxis, :, :, :]
+            stack = -stack[np.newaxis, :, :, :] #IMAGE INPUT IS INVERTED!!!
             stack[stack < 0] = 0
 
             rot90 = False  # if it doesn't work for asymmetric modes but does for symmetric ones, set to True to check if caused by rotation problem

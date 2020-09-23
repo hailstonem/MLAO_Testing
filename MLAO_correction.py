@@ -128,7 +128,7 @@ def ML_estimate(iterative_correct, scan):
             print("Mode " + str(mode) + " Applied = " + str(1))
             print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
 
-            start_aberrations[return_modes] = start_aberrations[return_modes] - pred
+            start_aberrations[[m-3 for m in return_modes]] = start_aberrations[[m-3 for m in return_modes]] - pred
 
 
 def make_betas_polytope(start_aberrations, offset_axes, nk, steps=[1]):

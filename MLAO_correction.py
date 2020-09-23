@@ -18,82 +18,6 @@ from PySide2.QtWidgets import QApplication
 
 import argparse
 
-DEBUG = False
-if not DEBUG:
-    from doptical.api.scanner_pb2_grpc import ScannerStub
-    from doptical.api.scanner_pb2 import Empty, ZernikeModes, ScannerRange, ScannerPixelRange
-
-    def capture_image(scanner):
-        scanner.StartScan(Empty())
-        t0 = time.time()
-        images_available = False
-        while not images_available:
-            time.sleep(2)
-            images_length = scanner.GetScanImagesLength(Empty()).length
-
-            if images_length > 0:
-                time.sleep(2)
-                images_available = True
-
-        images = scanner.GetScanImages(Empty()).images
-
-        # assert(len(images) == 1)
-
-        image = images[0]
-
-        return_image = np.array(image.data).reshape(image.height, image.width)
-        scanner.StopScan(Empty())
-
-        return return_image
-
-
-else:
-
-    class Empty:
-        def __init__(self):
-            pass
-
-    class ScannerPixelRange:
-        def __init__(self, x, y):
-            self.x = x
-            self.y = y
-
-    class ZernikeModes:
-        def __init__(self, modes, amplitudes):
-            pass
-
-    class ScannerStub:
-        ### dummy ScannerStub for testing###
-        def __init__(self, channel):
-            pass
-
-        def SetSLMZernikeModes(self, modes):
-            pass
-
-        def SetScanPixelRange(self, PixelRange):
-            self.x = PixelRange.x
-            self.y = PixelRange.y
-
-        def GetAOCalibrationStack(self, list_of_aberrations_lists, pixel_size, image_dim):
-            return np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
-
-        def StartScan(self, e):
-            pass
-
-        def GetScanImages(self, e):
-            T = namedtuple("T", ["images"])
-            return T([np.zeros((self.y, self.x))])
-
-        def GetScanImagesLength(self, e):
-            T = namedtuple("T", ["length"])
-            return T(1)
-
-    def capture_image(scanner):
-        return np.zeros(
-            (scanner.y, scanner.x), dtype="uint16"
-        )  # np.random.randint(0,65500,(scanner.y,scanner.x))#np.random.randint(0,65500,(scanner.y,scanner.x))
-
-
 def ML_estimate(iterative_correct, scan):
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value."""
     print('loading model')
@@ -243,5 +167,80 @@ parser.add_argument(
     help="if true scans through modes and applies and estimates single mode aberration, otherwise corrects for a single aberration", type=int
 )
 args = parser.parse_args()
-ML_estimate(args.iter, args.scan)
 
+if not args.dummy:
+    from doptical.api.scanner_pb2_grpc import ScannerStub
+    from doptical.api.scanner_pb2 import Empty, ZernikeModes, ScannerRange, ScannerPixelRange
+
+    def capture_image(scanner):
+        scanner.StartScan(Empty())
+        t0 = time.time()
+        images_available = False
+        while not images_available:
+            time.sleep(2)
+            images_length = scanner.GetScanImagesLength(Empty()).length
+
+            if images_length > 0:
+                time.sleep(2)
+                images_available = True
+
+        images = scanner.GetScanImages(Empty()).images
+
+        # assert(len(images) == 1)
+
+        image = images[0]
+
+        return_image = np.array(image.data).reshape(image.height, image.width)
+        scanner.StopScan(Empty())
+
+        return return_image
+
+
+else:
+
+    class Empty:
+        def __init__(self):
+            pass
+
+    class ScannerPixelRange:
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+
+    class ZernikeModes:
+        def __init__(self, modes, amplitudes):
+            pass
+
+    class ScannerStub:
+        ### dummy ScannerStub for testing###
+        def __init__(self, channel):
+            pass
+
+        def SetSLMZernikeModes(self, modes):
+            pass
+
+        def SetScanPixelRange(self, PixelRange):
+            self.x = PixelRange.x
+            self.y = PixelRange.y
+
+        def GetAOCalibrationStack(self, list_of_aberrations_lists, pixel_size, image_dim):
+            return np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
+
+        def StartScan(self, e):
+            pass
+
+        def GetScanImages(self, e):
+            T = namedtuple("T", ["images"])
+            return T([np.zeros((self.y, self.x))])
+
+        def GetScanImagesLength(self, e):
+            T = namedtuple("T", ["length"])
+            return T(1)
+
+    def capture_image(scanner):
+        return np.zeros(
+            (scanner.y, scanner.x), dtype="uint16"
+        )  # np.random.randint(0,65500,(scanner.y,scanner.x))#np.random.randint(0,65500,(scanner.y,scanner.x))
+
+
+ML_estimate(args.iter, args.scan)

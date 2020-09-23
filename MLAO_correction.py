@@ -79,7 +79,7 @@ def ML_estimate(iterative_correct, scan):
             aberration_modes = [int(i) for i in range(len(list_of_aberrations_lists))]
             stack = np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
             for i_image, aberration in enumerate(list_of_aberrations_lists):
-                print(aberration)
+                print([np.round(a,1) for a in aberration])
 
                 ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
                 scanner.SetSLMZernikeModes(ZM)
@@ -107,7 +107,7 @@ def ML_estimate(iterative_correct, scan):
 
             with open("./results/%s_%s_%s_coefficients.json" % (rnd, mode, it + 1), "w") as cofile:
                 coeffs = {
-                    "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations])),
+                    "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[[m-3 for m in return_modes]]])),
                     "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
                 }
                 json.dump(coeffs, cofile, indent=1)
@@ -116,7 +116,6 @@ def ML_estimate(iterative_correct, scan):
                 "./results/%s_%s_before_%s.tif" % (rnd, mode, it + 1), stack[0, :, :, 0].astype('float32')/stack[0, :, :, 0].max()
             )  # rnd just there to make overwrites unlikely. #TODO: Replace with proper solution when we have a better idea of what we want to save
 
-            start_aberrations = np.zeros((19))
 
             scanner.SetSLMZernikeModes(ZM)
             image = capture_image(scanner)
@@ -125,7 +124,7 @@ def ML_estimate(iterative_correct, scan):
                 "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), -image.astype('float32')/(image.min())
             )  # rnd just there to make overwrites unlikely. Replace with proper solution when we have a better idea of what we want to save
 
-            print("Mode " + str(mode) + " Applied = " + str(1))
+            print("Mode " + str(mode) + " Applied = " + str(start_aberrations[mode-3]))
             print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
 
             start_aberrations[[m-3 for m in return_modes]] = start_aberrations[[m-3 for m in return_modes]] - pred

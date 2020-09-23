@@ -189,7 +189,7 @@ def ML_estimate(iterative_correct, scan):
                 json.dump(coeffs, cofile, indent=1)
 
             tifffile.imsave(
-                "./results/%s_%s_before_%s.tif" % (rnd, mode, it + 1), stack[:, :, :, 0].astype('float32')
+                "./results/%s_%s_before_%s.tif" % (rnd, mode, it + 1), stack[0, :, :, 0].astype('float32')
             )  # rnd just there to make overwrites unlikely. #TODO: Replace with proper solution when we have a better idea of what we want to save
 
             start_aberrations = np.zeros((19))

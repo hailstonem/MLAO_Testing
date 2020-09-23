@@ -117,18 +117,23 @@ def ML_estimate(iterative_correct, scan):
             )  # rnd just there to make overwrites unlikely. #TODO: Replace with proper solution when we have a better idea of what we want to save
 
 
-            scanner.SetSLMZernikeModes(ZM)
-            image = capture_image(scanner)
-
-            tifffile.imsave(
-                "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), image.astype('float32')/(image.min())
-            )  # rnd just there to make overwrites unlikely. Replace with proper solution when we have a better idea of what we want to save
 
             print("Mode " + str(mode) + " Applied = " + str(start_aberrations[mode-3]))
             if mode in return_modes:
                 print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
 
             start_aberrations[[m-3 for m in return_modes]] = start_aberrations[[m-3 for m in return_modes]] - pred
+
+            
+
+            list_of_aberrations_lists = make_betas_polytope(start_aberrations, modes, 22, steps=[])
+            ZM = ZernikeModes(modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
+            scanner.SetSLMZernikeModes(ZM)
+            image = capture_image(scanner)
+
+            tifffile.imsave(
+                "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), image.astype('float32')/(image.min())
+            )  # rnd just there to make overwrites unlikely. Replace with proper solution when we have a better idea of what we want to save
 
 
 def make_betas_polytope(start_aberrations, offset_axes, nk, steps=[1]):

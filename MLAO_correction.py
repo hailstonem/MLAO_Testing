@@ -18,7 +18,7 @@ from PySide2.QtWidgets import QApplication
 
 import argparse
 
-DEBUG = True
+DEBUG = False
 if not DEBUG:
     from doptical.api.scanner_pb2_grpc import ScannerStub
     from doptical.api.scanner_pb2 import Empty, ZernikeModes, ScannerRange, ScannerPixelRange

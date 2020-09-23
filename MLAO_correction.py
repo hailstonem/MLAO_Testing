@@ -18,7 +18,7 @@ from PySide2.QtWidgets import QApplication
 
 import argparse
 
-DEBUG = False
+DEBUG = True
 if not DEBUG:
     from doptical.api.scanner_pb2_grpc import ScannerStub
     from doptical.api.scanner_pb2 import Empty, ZernikeModes, ScannerRange, ScannerPixelRange
@@ -129,7 +129,7 @@ def ML_estimate(iterative_correct, scan):
     if scan == -1:
         scan_modes = return_modes
     else:
-        scan_modes = scan#[np.random.choice(return_modes)]
+        scan_modes = [scan]#[np.random.choice(return_modes)]
     print(scan_modes)
     for mode in scan_modes:
 

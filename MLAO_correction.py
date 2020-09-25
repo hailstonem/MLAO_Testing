@@ -114,7 +114,7 @@ def ML_estimate(iterative_correct, scan):
                 json.dump(coeffs, cofile, indent=1)
 
             tifffile.imsave(
-                "./results/%s_%s_before_%s.tif" % (rnd, mode, it + 1), stack[0, :, :, 0].astype('float32')/stack[0, :, :, 0].max()
+                "./results/%s_%s_before_%s.tif" % (rnd, mode, it + 1), stack[0, :, :, 0].astype('float32')#/stack[0, :, :, 0].max()
             )  # rnd just there to make overwrites unlikely. #TODO: Replace with proper solution when we have a better idea of what we want to save
 
 
@@ -135,7 +135,7 @@ def ML_estimate(iterative_correct, scan):
             image = capture_image(scanner)
 
             tifffile.imsave(
-                "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), image.astype('float32')/(image.min())
+                "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), image.astype('float32')/-1 #(image.min())
             )  # rnd just there to make overwrites unlikely. Replace with proper solution when we have a better idea of what we want to save
 
 

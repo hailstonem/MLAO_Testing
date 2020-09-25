@@ -107,11 +107,16 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
             # pred=[0]*len(return_modes)
 
             with open("./results/%s_%s_%s_coefficients.json" % (rnd, mode, it + 1), "w") as cofile:
-                
-                coeffs = {
-                    "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[[m-3 for m in return_modes]]])),
-                    "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
-                }
+                if not correct_bias_only:
+                    coeffs = {
+                        "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[[m-3 for m in return_modes]]])),
+                        "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
+                    }
+                else:
+                    coeffs = {
+                        "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[[m-3 for m in modes]]])),
+                        "Estimated": dict(zip(return_modes, [float(p) for p in np.array(pred)[[m for m in return_modes if m in modes]]])),
+                    }
                 json.dump(coeffs, cofile, indent=1)
 
             tifffile.imsave(
@@ -129,7 +134,7 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
             if not correct_bias_only:
                 start_aberrations[[m-3 for m in return_modes]] = start_aberrations[[m-3 for m in return_modes]] - pred
             else:
-                start_aberrations[[m-3 for m in modes]] = start_aberrations[[m-3 for m in modes]] - pred
+                start_aberrations[[m-3 for m in modes]] = start_aberrations[[m-3 for m in modes]] - np.array(pred)[[m for m in return_modes if m in modes]]
             
 
             list_of_aberrations_lists = make_betas_polytope(start_aberrations, modes, 22, steps=[])

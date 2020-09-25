@@ -58,7 +58,8 @@ def ML_estimate(iterative_correct, scan):
     for mode in scan_modes:
 
         start_aberrations = np.zeros((19))
-        start_aberrations[mode - 3] = 1
+        if mode>=3:
+            start_aberrations[mode - 3] = 1
 
         for it in range(iterative_correct + 1):
             ###TODO: Either use below code to make list of list of aberrations, or perhaps use list of ZernikeModes objects? depending on GetAOCalibrationStack
@@ -117,8 +118,10 @@ def ML_estimate(iterative_correct, scan):
             )  # rnd just there to make overwrites unlikely. #TODO: Replace with proper solution when we have a better idea of what we want to save
 
 
-
-            print("Mode " + str(mode) + " Applied = " + str(start_aberrations[mode-3]))
+            if mode>=3:
+                print("Mode " + str(mode) + " Applied = " + str(start_aberrations[mode-3]))
+            else:
+                print ("Mode " + str(mode) + " Applied")
             if mode in return_modes:
                 print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
 

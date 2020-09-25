@@ -169,3 +169,5 @@ results/859_convergence.png
 results/859_estimates.png
 results/estimates.png
 results/graph_results.py
+*.json
+*.png

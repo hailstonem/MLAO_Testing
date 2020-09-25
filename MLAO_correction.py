@@ -18,7 +18,7 @@ from PySide2.QtWidgets import QApplication
 
 import argparse
 
-def ML_estimate(iterative_correct, scan):
+def ML_estimate(iterative_correct, scan,correct_bias_only):
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value."""
     print('loading model')
     model = tf.keras.models.load_model(
@@ -90,7 +90,7 @@ def ML_estimate(iterative_correct, scan):
 
             # format for CNN
             stack = -stack[np.newaxis, :, :, :] #IMAGE INPUT IS INVERTED!!!
-            stack[stack < 0] = 0
+            stack[stack < 0] = 0 ### is this necessary?
 
             rot90 = False  # if it doesn't work for asymmetric modes but does for symmetric ones, set to True to check if caused by rotation problem
             if rot90:
@@ -107,6 +107,7 @@ def ML_estimate(iterative_correct, scan):
             # pred=[0]*len(return_modes)
 
             with open("./results/%s_%s_%s_coefficients.json" % (rnd, mode, it + 1), "w") as cofile:
+                
                 coeffs = {
                     "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[[m-3 for m in return_modes]]])),
                     "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
@@ -125,8 +126,10 @@ def ML_estimate(iterative_correct, scan):
             if mode in return_modes:
                 print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
 
-            start_aberrations[[m-3 for m in return_modes]] = start_aberrations[[m-3 for m in return_modes]] - pred
-
+            if not correct_bias_only:
+                start_aberrations[[m-3 for m in return_modes]] = start_aberrations[[m-3 for m in return_modes]] - pred
+            else:
+                start_aberrations[[m-3 for m in modes]] = start_aberrations[[m-3 for m in modes]] - pred
             
 
             list_of_aberrations_lists = make_betas_polytope(start_aberrations, modes, 22, steps=[])
@@ -169,10 +172,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
 )
-parser.add_argument("-iter", help="number of iterations", type=int)
+parser.add_argument("-iter", help="specifies number of iterations for correction", type=int,default=0)
 parser.add_argument(
     "-scan",
-    help="if true scans through modes and applies and estimates single mode aberration, otherwise corrects for a single aberration", type=int
+    help="values>3 apply 1 radian of the specified mode, 0-3 apply no aberration, -1 scans through each mode and corrects", type=int
+)
+parser.add_argument(
+    "--correct_bias_only",
+    help="values>3 apply 1 radian of the specified mode, 0-3 apply no aberration, -1 scans through each mode and corrects", action="store_true"
 )
 args = parser.parse_args()
 
@@ -251,4 +258,4 @@ else:
         )  # np.random.randint(0,65500,(scanner.y,scanner.x))#np.random.randint(0,65500,(scanner.y,scanner.x))
 
 
-ML_estimate(args.iter, args.scan)
+ML_estimate(args.iter, args.scan, args.correct_bias_only)

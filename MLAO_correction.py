@@ -89,7 +89,7 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
                 time.sleep(1)
 
             # format for CNN
-            stack = -stack[np.newaxis, :, :, :] #IMAGE INPUT IS INVERTED!!!
+            stack = -stack[np.newaxis, 2:, 2:, :] #IMAGE INPUT IS INVERTED!!!
             stack[stack < 0] = 0 ### is this necessary?
 
             rot90 = False  # if it doesn't work for asymmetric modes but does for symmetric ones, set to True to check if caused by rotation problem
@@ -143,7 +143,7 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
             image = capture_image(scanner)
 
             tifffile.imsave(
-                "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), image.astype('float32')/-1 #(image.min())
+                "./results/%s_%s_after_%s.tif" % (rnd, mode, it + 1), image[2:,2:,:].astype('float32')/-1 #(image.min())
             )  # rnd just there to make overwrites unlikely. Replace with proper solution when we have a better idea of what we want to save
 
 

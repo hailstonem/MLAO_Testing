@@ -114,8 +114,8 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
                     }
                 else:
                     coeffs = {
-                        "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[[m-3 for m in modes]]])),
-                        "Estimated": dict(zip(return_modes, [float(p) for p in np.array(pred)[[m for m in return_modes if m in modes]]])),
+                        "Applied": dict(zip(modes, [float(p) for p in start_aberrations[[m-3 for m in modes]]])),
+                        "Estimated": dict(zip(modes, [float(p) for p in np.array(pred)[[m for m in return_modes if m in modes]]])),
                     }
                 json.dump(coeffs, cofile, indent=1)
 

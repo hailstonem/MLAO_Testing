@@ -185,11 +185,11 @@ if not args.dummy:
         t0 = time.time()
         images_available = False
         while not images_available:
-            time.sleep(2)
+            time.sleep(1)
             images_length = scanner.GetScanImagesLength(Empty()).length
 
             if images_length > 0:
-                time.sleep(2)
+                time.sleep(1)
                 images_available = True
 
         images = scanner.GetScanImages(Empty()).images

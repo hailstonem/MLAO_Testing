@@ -108,8 +108,15 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
                 )[0]
             )  # list of estimated modes
             # pred=[0]*len(return_modes)
+            it + 1
+            jsonfile = "./results/%s_%s_coefficients.json" % (rnd, mode, )
+            if os.path.isfile(jsonfile):
+                with open(jsonfile, "r") as cofile:
+                    coeff_data = json.load(cofile)
+            else:
+                coeff_data = {}
 
-            with open("./results/%s_%s_%s_coefficients.json" % (rnd, mode, it + 1), "w") as cofile:
+            with open(jsonfile, "w") as cofile:
                 if not correct_bias_only:
                     coeffs = {
                         "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[[m-3 for m in return_modes]]])),
@@ -120,7 +127,8 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
                         "Applied": dict(zip(modes, [float(p) for p in start_aberrations[[m-3 for m in modes]]])),
                         "Estimated": dict(zip(modes, [float(p) for p in np.array(pred)[[m for m in return_modes if m in modes]]])),
                     }
-                json.dump(coeffs, cofile, indent=1)
+                coeff_data[str(it+1)] = coeffs
+                json.dump(coeff_data, cofile, indent=1)
 
             tifffile.imsave(
                 "./results/%s_%s_before_%s.tif" % (rnd, mode, it + 1), stack[0, :, :, 0].astype('float32')#/stack[0, :, :, 0].max()

@@ -180,7 +180,7 @@ parser.add_argument(
 parser.add_argument("-iter", help="specifies number of iterations for correction", type=int,default=0)
 parser.add_argument(
     "-scan",
-    help="values>3 apply 1 radian of the specified mode, 0-3 apply no aberration, -1 scans through each mode and corrects", type=int
+    help="values>3 apply 1 radian of the specified mode, 0-3 apply no aberration, -1 scans through each mode and corrects", type=int, default=-1
 )
 parser.add_argument(
     "--correct_bias_only",

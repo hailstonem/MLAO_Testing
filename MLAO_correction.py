@@ -79,7 +79,10 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
             # Get stack of images
             aberration_modes = [int(i) for i in range(len(list_of_aberrations_lists))]
             stack = np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
-            for i_image, aberration in enumerate(list_of_aberrations_lists):
+            shuffled_order = np.arange(len(list_of_aberrations_lists))
+            np.random.shuffle(shuffled_order)
+            for i_image in shuffled_order:
+                aberration = list_of_aberrations_lists[i_image]
                 print([np.round(a,1) for a in aberration])
 
                 ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)

@@ -93,10 +93,10 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
 
 
             # format for CNN
-            stack = -stack[np.newaxis, 2::-1, 2:, :]  # IMAGE INPUT IS INVERTED!!!
+            stack = -stack[np.newaxis, 2:, 2:, :]  # IMAGE INPUT IS INVERTED!!!
             stack[stack < 0] = 0  ### is this necessary?
             
-            rot90 = False  # if it doesn't work for asymmetric modes but does for symmetric ones, set to True to check if caused by rotation problem
+            rot90 = True  # if it doesn't work for asymmetric modes but does for symmetric ones, set to True to check if caused by rotation problem
             if rot90:
                 stack = np.rot90(stack, axes=[1, 2])
 

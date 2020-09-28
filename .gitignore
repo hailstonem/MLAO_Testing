@@ -171,3 +171,4 @@ results/estimates.png
 results/graph_results.py
 *.json
 *.png
+*.tif

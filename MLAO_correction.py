@@ -87,9 +87,9 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
 
                 ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
                 scanner.SetSLMZernikeModes(ZM)
+                time.sleep(1)
                 image = capture_image(scanner)
                 stack[:, :, i_image] = image
-                time.sleep(1)
 
             # format for CNN
             stack = -stack[np.newaxis, 2:, 2:, :] #IMAGE INPUT IS INVERTED!!!

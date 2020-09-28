@@ -46,8 +46,7 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
     ]  ### These modes are the ones the model returns (specific to model)
 
     channel = grpc.insecure_channel("localhost:50051")
-    scanner = ScannerStub(channel)
-
+    
     # loop over each estimated mode and test to see if network estimates it
     # corrections
     if scan == -1:
@@ -63,6 +62,7 @@ def ML_estimate(iterative_correct, scan,correct_bias_only):
 
         for it in range(iterative_correct + 1):
             ###TODO: Either use below code to make list of list of aberrations, or perhaps use list of ZernikeModes objects? depending on GetAOCalibrationStack
+            scanner = ScannerStub(channel)
 
             list_of_aberrations_lists = make_betas_polytope(start_aberrations, modes, 22, steps=[1])
             ###

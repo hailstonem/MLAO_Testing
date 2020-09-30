@@ -75,7 +75,7 @@ def ml_estimate(iterations, scan, params):
             stack = -stack[np.newaxis, 2:, 2:, :]  # Image is inverted (also clip flyback)
             # stack[stack < 0] = 0  ### is this necessary given we're working with floats?
 
-            rot90 = False  # if it doesn't work for asymmetric modes but does for symmetric ones, set to True to check if caused by rotation problem
+            rot90 = True  # align rotation of image with network
             # get prediction
             pred = model.predict(stack, rot90)
 
@@ -95,6 +95,21 @@ def ml_estimate(iterations, scan, params):
                     pred[[n for m, n in enumerate(return_modes) if m in bias_modes]],
                     it + 1,
                 )
+
+            if rot90 > 0:
+                for rot in range(1, 4):
+                    pred = model.predict(stack, rot90)
+                    jsonfile = "./results/%03d_%s_coefficients_r_%s.json" % (rnd, mode, rot * 90)
+                    if not params.correct_bias_only:
+                        coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
+                    else:
+                        coeff_to_json(
+                            jsonfile,
+                            start_aberrations,
+                            bias_modes,
+                            pred[[n for m, n in enumerate(return_modes) if m in bias_modes]],
+                            it + 1,
+                        )
 
             tifname = "./results/%03d_%s_before.tif" % (rnd, mode)
             save_tif(tifname, stack[0, :, :, 0].astype("float32"))  # /stack[0, :, :, 0].max())

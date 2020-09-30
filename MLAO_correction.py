@@ -65,7 +65,7 @@ def ml_estimate(iterations, scan, params):
                 aberration = list_of_aberrations_lists[i_image]
                 print([np.round(a, 1) for a in aberration])
 
-                ZM = ZernikeModes(bias_modes=aberration_modes, amplitudes=aberration)
+                ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
                 scanner.SetSLMZernikeModes(ZM)
                 time.sleep(1)
                 image = capture_image(scanner)
@@ -122,7 +122,7 @@ def ml_estimate(iterations, scan, params):
 
             # collect corrected image
             list_of_aberrations_lists = make_bias_polytope(start_aberrations, bias_modes, 22, steps=[])
-            ZM = ZernikeModes(bias_modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
+            ZM = ZernikeModes(modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
             scanner.SetSLMZernikeModes(ZM)
             image = capture_image(scanner)
             tifname = "./results/%03d_%s_after.tif" % (rnd, mode)

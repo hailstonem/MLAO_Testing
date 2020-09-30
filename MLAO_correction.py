@@ -77,7 +77,7 @@ def ml_estimate(iterations, scan, params):
 
             rot90 = True  # align rotation of image with network
             # get prediction
-            pred = model.predict(stack, rot90)
+            pred = model.predict(stack)
 
             print("Mode " + str(mode) + " Applied")
             if mode in return_modes:

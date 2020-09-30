@@ -44,7 +44,7 @@ def ML_estimate(iterations, scan, params):
         # set initial aberration
         start_aberrations = np.zeros((max(return_modes) + 1))
         if params.load_abb:
-            start_aberrations = load_start_abb(".", start_aberrations)
+            start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
 
         start_aberrations[mode] += 1
 
@@ -128,6 +128,11 @@ def ML_estimate(iterations, scan, params):
             tifname = "./results/%03d_%s_after.tif" % (rnd, mode)
             save_tif(tifname, image[2:, 2:].astype("float32") / -1)
 
+            if params.save_abb:
+                with open("./start_abb.json", "w") as cofile:
+                    data = dict(zip(return_modes, [float(p) for p in start_aberrations[return_modes]]))
+                    json.dump(data, cofile, indent=1)
+
 
 def get_model():
     print("loading model")
@@ -192,7 +197,7 @@ def load_start_abb(filename, abb):
     if os.path.isfile(filename):
         with open(filename, "r") as cofile:
             data = json.load(cofile)
-    for k, v in data:
+    for k, v in data.items():
         abb[int(k)] = float(v)
     return abb
 
@@ -203,7 +208,7 @@ def make_bias_polytope(start_aberrations, offset_axes, nk, steps=[1]):
     # beta (diffraction-limited), N_beta = cpsf.czern.nk
     beta = np.zeros(nk, dtype=np.float32)
     beta[:] = start_aberrations[:]
-    beta[0] = 1.0
+    # beta[0] = 1.0
     # add offsets to beta
 
     betas = []
@@ -240,6 +245,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--load_abb", help="if true, load intial aberration from json", action="store_true",
+    )
+    parser.add_argument(
+        "--save_abb", help="if true, load intial aberration from json", action="store_true",
     )
     args = parser.parse_args()
 

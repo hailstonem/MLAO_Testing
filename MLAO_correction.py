@@ -1,25 +1,20 @@
 import os
 import time
-from collections import namedtuple
+import json
+import argparse
+
+import numpy as np
+import tifffile
+
+import grpc
+from PySide2.QtWidgets import QApplication
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
 
-# from tensorflow.keras import backend as K
-import numpy as np
 
-import tifffile
-import json
-
-import grpc
-
-from PySide2.QtWidgets import QApplication
-
-import argparse
-
-
-def ML_estimate(iterations, scan, params):
+def ml_estimate(iterations, scan, params):
 
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 
     params should specify correct_bias_only and load_abb"""
@@ -202,7 +197,7 @@ def load_start_abb(filename, abb):
     return abb
 
 
-def make_bias_polytope(start_aberrations, offset_axes, nk, steps=[1]):
+def make_bias_polytope(start_aberrations, offset_axes, nk, steps=(1)):
     """Return list of list of zernike amplitudes ('betas') for generating cross-polytope pattern of psfs
     """
     # beta (diffraction-limited), N_beta = cpsf.czern.nk
@@ -286,4 +281,4 @@ if __name__ == "__main__":
 
             return return_image
 
-    ML_estimate(args.iter, args.scan, args)
+    ml_estimate(args.iter, args.scan, args)

@@ -95,12 +95,11 @@ def ml_estimate(iterations, scan, params):
             # save to json and tif
             jsonfile = "./results/%03d_%s_coefficients.json" % (rnd, mode,)
             if not params.correct_bias_only:
-                coeff_to_json(jsonfile, start_aberrations, modes, return_modes, pred, it + 1)
+                coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
             else:
                 coeff_to_json(
                     jsonfile,
                     start_aberrations,
-                    modes,
                     modes,
                     pred[[n for m, n in enumerate(return_modes) if m in modes]],
                     it + 1,
@@ -168,9 +167,9 @@ def append_to_json(filename, new_data):
         json.dump(data, cofile, indent=1)
 
 
-def coeff_to_json(filename, start_aberrations, modes, return_modes, pred, iteration):
-
-    coeffs = {
+def coeff_to_json(filename, start_aberrations, return_modes, pred, iterations):
+    coeffs = dict()
+    coeffs[str(iterations)] = {
         "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[return_modes]],)),
         "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
     }

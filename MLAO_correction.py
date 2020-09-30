@@ -19,7 +19,7 @@ def ml_estimate(iterations, scan, params):
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 
     params should specify correct_bias_only load_abb and save_abb"""
 
-    rnd = non_colliding_prefix("./results")
+    rnd = time_prefix("./results")
 
     model = ModelWrapper()
     bias_modes, return_modes = model.bias_modes, model.return_modes
@@ -211,6 +211,14 @@ def non_colliding_prefix(path):
     indexes = set(np.arange(0, 999))
     used_index = set([int(x.split("_")[0]) for x in os.listdir(path) if len(x.split("_")[0]) == 3])
     return np.random.choice(list(indexes - used_index))
+
+
+def time_prefix(path):
+
+    index = np.random.randint(0, 10)
+    prefix = int(time.strftime("%" + "d%H%M%S") + str(index))
+    # used_index = set([int(x.split("_")[0]) for x in os.listdir(path) if len(x.split("_")[0]) == 3])
+    return prefix
 
 
 def load_start_abb(filename, abb):

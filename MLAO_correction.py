@@ -17,11 +17,12 @@ import tensorflow as tf
 def ml_estimate(iterations, scan, params):
 
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 
-    params should specify correct_bias_only and load_abb"""
+    params should specify correct_bias_only load_abb and save_abb"""
 
     rnd = non_colliding_prefix("./results")
 
-    model, modes, return_modes = get_model()
+    model = ModelWrapper()
+    bias_modes, return_modes = model.bias_modes, model.return_modes
 
     channel = grpc.insecure_channel("localhost:50051")
     scanner = ScannerStub(channel)
@@ -32,8 +33,7 @@ def ml_estimate(iterations, scan, params):
         scan_modes = [scan]
     print(scan_modes)
 
-    # loop over each estimated mode and test to see if network estimates it
-    # corrections
+    # loop over each mode and test to see if network estimates it
     for mode in scan_modes:
 
         # set initial aberration
@@ -45,7 +45,7 @@ def ml_estimate(iterations, scan, params):
 
         for it in range(iterations + 1):
 
-            list_of_aberrations_lists = make_bias_polytope(start_aberrations, modes, 22, steps=[1])
+            list_of_aberrations_lists = make_bias_polytope(start_aberrations, bias_modes, 22, steps=[1])
 
             # Set up scan
             image_dim = (128, 128)  # set as appropriate
@@ -65,7 +65,7 @@ def ml_estimate(iterations, scan, params):
                 aberration = list_of_aberrations_lists[i_image]
                 print([np.round(a, 1) for a in aberration])
 
-                ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
+                ZM = ZernikeModes(bias_modes=aberration_modes, amplitudes=aberration)
                 scanner.SetSLMZernikeModes(ZM)
                 time.sleep(1)
                 image = capture_image(scanner)
@@ -76,18 +76,9 @@ def ml_estimate(iterations, scan, params):
             # stack[stack < 0] = 0  ### is this necessary given we're working with floats?
 
             rot90 = False  # if it doesn't work for asymmetric modes but does for symmetric ones, set to True to check if caused by rotation problem
-            if rot90:
-                stack = np.rot90(stack, axes=[1, 2])
-
             # get prediction
-            pred = list(
-                model.predict(
-                    (
-                        (stack.astype("float") - stack.mean())
-                        / max(stack.astype("float").std(), 10e-20)  # prevent div/0
-                    )
-                )[0]
-            )
+            pred = model.predict(stack, rot90)
+
             print("Mode " + str(mode) + " Applied")
             if mode in return_modes:
                 print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
@@ -100,8 +91,8 @@ def ml_estimate(iterations, scan, params):
                 coeff_to_json(
                     jsonfile,
                     start_aberrations,
-                    modes,
-                    pred[[n for m, n in enumerate(return_modes) if m in modes]],
+                    bias_modes,
+                    pred[[n for m, n in enumerate(return_modes) if m in bias_modes]],
                     it + 1,
                 )
 
@@ -112,11 +103,11 @@ def ml_estimate(iterations, scan, params):
             if not params.correct_bias_only:
                 start_aberrations[return_modes] = start_aberrations[return_modes] - pred
             else:
-                start_aberrations[modes] = start_aberrations[modes] - np.array(pred)[modes]
+                start_aberrations[bias_modes] = start_aberrations[bias_modes] - np.array(pred)[bias_modes]
 
             # collect corrected image
-            list_of_aberrations_lists = make_bias_polytope(start_aberrations, modes, 22, steps=[])
-            ZM = ZernikeModes(modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
+            list_of_aberrations_lists = make_bias_polytope(start_aberrations, bias_modes, 22, steps=[])
+            ZM = ZernikeModes(bias_modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
             scanner.SetSLMZernikeModes(ZM)
             image = capture_image(scanner)
             tifname = "./results/%03d_%s_after.tif" % (rnd, mode)
@@ -128,32 +119,52 @@ def ml_estimate(iterations, scan, params):
                     json.dump(data, cofile, indent=1)
 
 
-def get_model():
-    print("loading model")
-    model = tf.keras.models.load_model(
-        "./models/"
-        + "28CS-L45-90-45m-N2-MSE-xAR5CCFJ2-e3000-5000r25-175-HN-NB-rlu-A45C67S11DREAL37R21-IM15-TrN3-CA025-ScycLR-Mpl-adW-b25s6-1p200g-mpk5L-p05-92"
-        + "_savedmodel.h5",
-        compile=False,
-    )
-    bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
-    return_modes = [
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        15,
-        16,
-        21,
-    ]
+class ModelWrapper:
+    """Stores model specific parameters and applied preprocessing before prediction"""
 
-    print("model_loaded")
-    return model, bias_modes, return_modes
+    def __init__(self):
+
+        print("loading model")
+        self.model = tf.keras.models.load_model(
+            "./models/"
+            + "28CS-L45-90-45m-N2-MSE-xAR5CCFJ2-e3000-5000r25-175-HN-NB-rlu-A45C67S11DREAL37R21-IM15-TrN3-CA025-ScycLR-Mpl-adW-b25s6-1p200g-mpk5L-p05-92"
+            + "_savedmodel.h5",
+            compile=False,
+        )
+        print("model_loaded")
+
+        self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
+        self.return_modes = [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            15,
+            16,
+            21,
+        ]
+
+    def predict(self, stack, rot90=False):
+        def rotate(stack, rot90):
+            return np.rot90(stack, k=rot90, axes=[1, 2])
+
+        if rot90:
+            stack = rotate(stack, rot90)
+
+        pred = list(
+            self.model.predict(
+                (
+                    (stack.astype("float") - stack.mean())
+                    / max(stack.astype("float").std(), 10e-20)  # prevent div/0
+                )
+            )[0]
+        )
+        return pred
 
 
 def append_to_json(filename, new_data):

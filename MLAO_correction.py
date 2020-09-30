@@ -42,7 +42,7 @@ def ml_estimate(iterations, scan, params):
             start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
 
         start_aberrations[mode] += 1
-
+        acc_pred = np.zeros(len(return_modes))
         for it in range(iterations + 1):
 
             list_of_aberrations_lists = make_bias_polytope(start_aberrations, bias_modes, 22, steps=[1])
@@ -75,7 +75,7 @@ def ml_estimate(iterations, scan, params):
             stack = -stack[np.newaxis, 2:, 2:, :]  # Image is inverted (also clip flyback)
             # stack[stack < 0] = 0  ### is this necessary given we're working with floats?
 
-            rot90 = True  # align rotation of image with network
+            rot90 = False  # align rotation of image with network
             # get prediction
             pred = model.predict(stack)
 
@@ -114,9 +114,11 @@ def ml_estimate(iterations, scan, params):
             tifname = "./results/%03d_%s_before.tif" % (rnd, mode)
             save_tif(tifname, stack[0, :, :, 0].astype("float32"))  # /stack[0, :, :, 0].max())
 
+            acc_pred += pred
+
             # apply correction for next iteration
             if not params.correct_bias_only:
-                start_aberrations[return_modes] = start_aberrations[return_modes] - pred
+                start_aberrations[return_modes] = start_aberrations[return_modes] - acc_pred / (it + 1)
             else:
                 start_aberrations[bias_modes] = start_aberrations[bias_modes] - np.array(pred)[bias_modes]
 

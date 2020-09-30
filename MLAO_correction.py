@@ -98,16 +98,16 @@ def ml_estimate(iterations, scan, params):
 
             if rot90 > 0:
                 for rot in range(1, 4):
-                    pred = model.predict(stack, rot90)
+                    pred2 = model.predict(stack, rot90)
                     jsonfile = "./results/%03d_%s_coefficients_r_%s.json" % (rnd, mode, rot * 90)
                     if not params.correct_bias_only:
-                        coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
+                        coeff_to_json(jsonfile, start_aberrations, return_modes, pred2, it + 1)
                     else:
                         coeff_to_json(
                             jsonfile,
                             start_aberrations,
                             bias_modes,
-                            pred[[n for m, n in enumerate(return_modes) if m in bias_modes]],
+                            pred2[[n for m, n in enumerate(return_modes) if m in bias_modes]],
                             it + 1,
                         )
 

@@ -62,7 +62,7 @@ def ml_estimate(iterations, scan, params):
 
             # Get stack of images
             for i_image in shuffled_order:
-                for _ in params.repeats:
+                for _ in range(params.repeats):
                     aberration = list_of_aberrations_lists[i_image]
                     print([np.round(a, 1) for a in aberration])
 
@@ -284,9 +284,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--save_abb", help="if true, load intial aberration from json", action="store_true",
     )
-    parser.add_argument(
-        "-repeats", help="apply averaging", type=int,
-    )
+    parser.add_argument("-repeats", help="apply averaging", type=int, default=1)
     args = parser.parse_args()
 
     if args.dummy:

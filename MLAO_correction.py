@@ -62,14 +62,18 @@ def ml_estimate(iterations, scan, params):
 
             # Get stack of images
             for i_image in shuffled_order:
-                aberration = list_of_aberrations_lists[i_image]
-                print([np.round(a, 1) for a in aberration])
+                for _ in params.repeats:
+                    aberration = list_of_aberrations_lists[i_image]
+                    print([np.round(a, 1) for a in aberration])
 
-                ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
-                scanner.SetSLMZernikeModes(ZM)
-                time.sleep(1)
-                image = capture_image(scanner)
-                stack[:, :, i_image] = image
+                    ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
+                    scanner.SetSLMZernikeModes(ZM)
+
+                    if params.dummy:
+                        time.sleep(1)
+
+                    image = capture_image(scanner)
+                    stack[:, :, i_image] += image
 
             # format for CNN
             stack = -stack[np.newaxis, 2:, 2:, :]  # Image is inverted (also clip flyback)
@@ -278,6 +282,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--save_abb", help="if true, load intial aberration from json", action="store_true",
+    )
+    parser.add_argument(
+        "-repeats", help="apply averaging", type=int,
     )
     args = parser.parse_args()
 

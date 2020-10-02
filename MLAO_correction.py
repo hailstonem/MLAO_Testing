@@ -122,7 +122,8 @@ def ml_estimate(iterations, scan, params):
 
             # apply correction for next iteration
             if not params.correct_bias_only:
-                start_aberrations[return_modes] = start_aberrations[return_modes] - acc_pred / (it + 1)
+                start_aberrations[return_modes] = start_aberrations[return_modes] - pred
+                # acc_pred / (it + 1)
             else:
                 start_aberrations[bias_modes] = start_aberrations[bias_modes] - np.array(pred)[bias_modes]
 

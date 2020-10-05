@@ -301,16 +301,17 @@ if __name__ == "__main__":
         from doptical.api.scanner_pb2 import Empty, ZernikeModes, ScannerRange, ScannerPixelRange
 
         def capture_image(scanner):
-            scanner.StartScan(Empty())
             time.sleep(0.5)
+            scanner.StartScan(Empty())
+
             t0 = time.time()
             images_available = False
             while not images_available:
-                time.sleep(1)
+                time.sleep(0.1)
                 images_length = scanner.GetScanImagesLength(Empty()).length
 
                 if images_length > 0:
-                    time.sleep(1)
+                    time.sleep(0.1)
                     images_available = True
 
             images = scanner.GetScanImages(Empty()).images

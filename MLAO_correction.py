@@ -79,9 +79,10 @@ def ml_estimate(iterations, scan, params):
             stack = -stack[np.newaxis, 2:, 2:, :]  # Image is inverted (also clip flyback)
             # stack[stack < 0] = 0  ### is this necessary given we're working with floats?
 
+            stack = stack[:, ::-1, :, :]  # correct flip
             rot90 = False  # align rotation of image with network
             # get prediction
-            pred = model.predict(stack, 1)
+            pred = model.predict(stack)
 
             print("Mode " + str(mode) + " Applied")
             if mode in return_modes:

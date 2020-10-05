@@ -303,7 +303,7 @@ if __name__ == "__main__":
         def capture_image(scanner):
             time.sleep(0.5)
             scanner.StartScan(Empty())
-
+            time.sleep(1)
             t0 = time.time()
             images_available = False
             while not images_available:

@@ -97,7 +97,7 @@ def ml_estimate(iterations, scan, params):
                     jsonfile,
                     start_aberrations,
                     bias_modes,
-                    [pred[n] for m, n in enumerate(return_modes) if m in bias_modes],
+                    [pred[m] for m, n in enumerate(return_modes) if m in bias_modes],
                     it + 1,
                 )
 

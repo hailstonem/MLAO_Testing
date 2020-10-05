@@ -41,7 +41,7 @@ def ml_estimate(iterations, scan, params):
         if params.load_abb:
             start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
 
-        start_aberrations[mode] += 1
+        start_aberrations[mode] += 2
         acc_pred = np.zeros(len(return_modes))
         for it in range(iterations + 1):
 

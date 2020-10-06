@@ -126,7 +126,10 @@ def ml_estimate(iterations, scan, params):
                 start_aberrations[return_modes] = start_aberrations[return_modes] - pred
                 # acc_pred / (it + 1)
             else:
-                start_aberrations[bias_modes] = start_aberrations[bias_modes] - np.array(pred)[bias_modes]
+                start_aberrations[bias_modes] = (
+                    start_aberrations[bias_modes]
+                    - np.array(pred)[[en for en, m in enumerate(return_modes) if m in bias_modes]]
+                )
 
             # collect corrected image
             list_of_aberrations_lists = make_bias_polytope(start_aberrations, bias_modes, 22, steps=[])

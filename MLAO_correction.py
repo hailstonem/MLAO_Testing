@@ -53,7 +53,7 @@ def ml_estimate(iterations, scan, params):
         start_aberrations = np.zeros((max(return_modes) + 1))
         if params.load_abb:
             start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
-
+            print("abberation loaded")
         start_aberrations[mode] += 2
         acc_pred = np.zeros(len(return_modes))
         for it in range(iterations + 1):
@@ -108,26 +108,11 @@ def ml_estimate(iterations, scan, params):
             # else:
             coeff_to_json(
                 jsonfile,
-                start_aberrations,
+                tuple(start_aberrations),
                 modifiable_modes,
                 [pred[i] for i in modifiable_mode_indexes],
                 it + 1,
             )
-
-            if rot90 > 0:
-                for rot in range(1, 4):
-                    pred2 = model.predict(stack, rot90)
-                    jsonfile = "./results/%03d_%s_coefficients_r_%s.json" % (rnd, mode, rot * 90)
-                    if not params.correct_bias_only:
-                        coeff_to_json(jsonfile, start_aberrations, return_modes, pred2, it + 1)
-                    else:
-                        coeff_to_json(
-                            jsonfile,
-                            start_aberrations,
-                            bias_modes,
-                            pred2[[n for m, n in enumerate(return_modes) if m in bias_modes]],
-                            it + 1,
-                        )
 
             tifname = "./results/%03d_%s_before.tif" % (rnd, mode)
             save_tif(tifname, stack[0, :, :, 0].astype("float32"))  # /stack[0, :, :, 0].max())
@@ -216,7 +201,7 @@ def append_to_json(filename, new_data):
 def coeff_to_json(filename, start_aberrations, return_modes, pred, iterations):
     coeffs = dict()
     coeffs[str(iterations)] = {
-        "Applied": dict(zip(return_modes, [float(p) for p in start_aberrations[return_modes]],)),
+        "Applied": dict(zip(return_modes, [float(start_aberrations[p]) for p in return_modes],)),
         "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
     }
     append_to_json(filename, coeffs)
@@ -260,16 +245,16 @@ def make_bias_polytope(start_aberrations, offset_axes, nk, steps=(1)):
     # add offsets to beta
 
     betas = []
-    betas.append(beta)
+    betas.append(tuple(beta))
     for axis in offset_axes:
         for step in steps:
             plus_offset = beta.copy()
             plus_offset[axis] += 1 * step
-            betas.append(plus_offset)
+            betas.append(tuple(plus_offset))
         for step in steps:
             minus_offset = beta.copy()
             minus_offset[axis] -= 1 * step
-            betas.append(minus_offset)
+            betas.append(tuple(minus_offset))
 
     return betas
 

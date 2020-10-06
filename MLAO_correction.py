@@ -125,6 +125,12 @@ def ml_estimate(iterations, scan, params):
             if not params.correct_bias_only:
                 start_aberrations[return_modes] = start_aberrations[return_modes] - pred
                 # acc_pred / (it + 1)
+            elif params.disable_mode:
+                modifiable_modes = [r for r in return_modes if r not in [params.disable_mode]]
+
+                start_aberrations[modifiable_modes] = start_aberrations[modifiable_modes] - [
+                    pred[en] for en, m in enumerate(return_modes) if m in modifiable_modes
+                ]
             else:
                 start_aberrations[bias_modes] = (
                     start_aberrations[bias_modes]
@@ -287,6 +293,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--save_abb", help="if true, load intial aberration from json", action="store_true",
+    )
+    parser.add_argument(
+        "--disable_mode", help="select mode to disable", type=int, default=0,
     )
     parser.add_argument("-repeats", help="apply averaging", type=int, default=1)
     args = parser.parse_args()

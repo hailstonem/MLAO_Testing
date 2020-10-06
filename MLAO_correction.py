@@ -13,7 +13,26 @@ os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
 
-calibration = np.zeros(12)
+# calibration should be from applied modes
+calibration = (
+    np.array(
+        [
+            -1.4981409992091357,
+            -1.789902743604034,
+            2.7167020300403237,
+            -0.5997019911184909,
+            1.9005382031202318,
+            2.0908874418586496,
+            0.48255226146429797,
+            -0.7884353453293443,
+            -1.2100700587034225,
+            0.5412564309313894,
+            0.39010114120319495,
+            -0.7055745903402566,
+        ]
+    )
+    / 10
+)
 
 
 def ml_estimate(iterations, scan, params):
@@ -97,7 +116,10 @@ def ml_estimate(iterations, scan, params):
             stack = stack[:, ::-1, :, :]  # correct flip
             rot90 = False  # align rotation of image with network
             # get prediction
-            pred = model.predict(stack) - calibration
+
+            pred = model.predict(stack)
+            if params.use_calibration:
+                pred = pred + 0.9 * calibration
 
             print("Mode " + str(mode) + " Applied")
             if mode in return_modes:
@@ -286,6 +308,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--disable_mode", help="select mode to disable", type=int, default=0,
+    )
+    parser.add_argument(
+        "--use_calibration", help="whether to use calibration", action="store_true",
     )
     parser.add_argument("-repeats", help="apply averaging", type=int, default=1)
     args = parser.parse_args()

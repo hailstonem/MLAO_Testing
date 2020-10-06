@@ -13,25 +13,7 @@ os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
 
-calibration = (
-    np.array(
-        [
-            1.0903333695605397,
-            -0.34173940122127533,
-            1.4122579526156187,
-            -1.6615454871207476,
-            1.1711816042661667,
-            0.8738462664186954,
-            0.6587141994386911,
-            -0.13819795288145542,
-            -0.37769732996821404,
-            0.14152371883392334,
-            0.38216353952884674,
-            -1.0146238692104816,
-        ]
-    )
-    / 10
-)
+calibration = np.zeros(12)
 
 
 def ml_estimate(iterations, scan, params):

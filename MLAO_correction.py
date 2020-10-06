@@ -33,6 +33,19 @@ def ml_estimate(iterations, scan, params):
         scan_modes = [scan]
     print(scan_modes)
 
+    if params.disable_mode > 0:
+        modifiable_modes = [r for r in return_modes if r != params.disable_mode]
+        modifiable_mode_indexes = [en for en, m in enumerate(return_modes) if m in modifiable_modes]
+
+    elif not params.correct_bias_only:
+        modifiable_modes = return_modes
+        modifiable_mode_indexes = [en for en, m in enumerate(return_modes) if m in modifiable_modes]
+        # acc_pred / (it + 1)
+    else:
+        modifiable_modes = bias_modes
+        modifiable_mode_indexes = [en for en, m in enumerate(return_modes) if m in modifiable_modes]
+    print("mm" + str(modifiable_modes))
+
     # loop over each mode and test to see if network estimates it
     for mode in scan_modes:
 
@@ -90,16 +103,16 @@ def ml_estimate(iterations, scan, params):
 
             # save to json and tif
             jsonfile = "./results/%03d_%s_coefficients.json" % (rnd, mode,)
-            if not params.correct_bias_only:
-                coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
-            else:
-                coeff_to_json(
-                    jsonfile,
-                    start_aberrations,
-                    bias_modes,
-                    [pred[m] for m, n in enumerate(return_modes) if m in bias_modes],
-                    it + 1,
-                )
+            # if not params.correct_bias_only:
+            #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
+            # else:
+            coeff_to_json(
+                jsonfile,
+                start_aberrations,
+                modifiable_modes,
+                [pred[i] for i in modifiable_mode_indexes],
+                it + 1,
+            )
 
             if rot90 > 0:
                 for rot in range(1, 4):
@@ -122,20 +135,10 @@ def ml_estimate(iterations, scan, params):
             acc_pred += pred
 
             # apply correction for next iteration
-            if not params.correct_bias_only:
-                start_aberrations[return_modes] = start_aberrations[return_modes] - pred
-                # acc_pred / (it + 1)
-            elif params.disable_mode:
-                modifiable_modes = [r for r in return_modes if r not in [params.disable_mode]]
 
-                start_aberrations[modifiable_modes] = start_aberrations[modifiable_modes] - [
-                    pred[en] for en, m in enumerate(return_modes) if m in modifiable_modes
-                ]
-            else:
-                start_aberrations[bias_modes] = (
-                    start_aberrations[bias_modes]
-                    - np.array(pred)[[en for en, m in enumerate(return_modes) if m in bias_modes]]
-                )
+            start_aberrations[modifiable_modes] = (
+                start_aberrations[modifiable_modes] - np.array(pred)[modifiable_mode_indexes]
+            )
 
             # collect corrected image
             list_of_aberrations_lists = make_bias_polytope(start_aberrations, bias_modes, 22, steps=[])

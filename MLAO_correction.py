@@ -41,6 +41,9 @@ def ml_estimate(iterations, scan, params):
     params should specify correct_bias_only load_abb and save_abb"""
 
     rnd = time_prefix("./results")
+    folder = "./results/" + time.strftime("%y%m%" + "d")
+    if not os.path.exists(folder):
+        os.mkdir(folder)
 
     model = ModelWrapper()
     bias_modes, return_modes = model.bias_modes, model.return_modes
@@ -126,7 +129,7 @@ def ml_estimate(iterations, scan, params):
                 print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
 
             # save to json and tif
-            jsonfile = "./results/%03d_%s_coefficients.json" % (rnd, mode,)
+            jsonfile = folder + "/%03d_%s_coefficients.json" % (rnd, mode,)
             # if not params.correct_bias_only:
             #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
             # else:
@@ -138,7 +141,7 @@ def ml_estimate(iterations, scan, params):
                 it + 1,
             )
 
-            tifname = "./results/%03d_%s_before.tif" % (rnd, mode)
+            tifname = folder + "/%03d_%s_before.tif" % (rnd, mode)
             save_tif(tifname, stack[0, :, :, 0].astype("float32"))  # /stack[0, :, :, 0].max())
 
             acc_pred += pred
@@ -154,7 +157,7 @@ def ml_estimate(iterations, scan, params):
             ZM = ZernikeModes(modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
             scanner.SetSLMZernikeModes(ZM)
             image = capture_image(scanner)
-            tifname = "./results/%03d_%s_after.tif" % (rnd, mode)
+            tifname = folder + "/%03d_%s_after.tif" % (rnd, mode)
             save_tif(tifname, image[2:, 2:].astype("float32") / -1)
 
             if params.save_abb:
@@ -244,8 +247,8 @@ def non_colliding_prefix(path):
 
 def time_prefix(path):
 
-    index = np.random.randint(0, 10)
-    prefix = int(time.strftime("%" + "d%H%M%S") + str(index))
+    # index = np.random.randint(0, 10)
+    prefix = int(time.strftime("%H%M%S"))
     # used_index = set([int(x.split("_")[0]) for x in os.listdir(path) if len(x.split("_")[0]) == 3])
     return prefix
 

@@ -107,7 +107,7 @@ def ml_estimate(iterations, scan, params):
             rot90 = False  # align rotation of image with network
             # get prediction
 
-            pred = model.predict(stack) / params.factor
+            pred = [x / params.factor for x in model.predict(stack)]
 
             if params.use_calibration:
                 pred = pred + 0.9 * calibration

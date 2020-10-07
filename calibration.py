@@ -169,6 +169,6 @@ def get_calibration(modes):
 
     for d in dictlist:
         for key, value in d.items():
-            calibration[int(key)] += float(value) / len(dictlist)
+            calibration[int(key)] += float(value) / len(dictlist) / 10
 
     return calibration[modes]

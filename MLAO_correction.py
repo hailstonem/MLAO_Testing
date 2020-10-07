@@ -29,7 +29,7 @@ def ml_estimate(iterations, scan, params):
 
     # calibration should be from applied modes
     calibration = get_calibration(return_modes)
-
+    print(calibration)
     channel = grpc.insecure_channel("localhost:50051")
     scanner = ScannerStub(channel)
 

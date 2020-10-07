@@ -60,7 +60,12 @@ def ml_estimate(iterations, scan, params):
         if params.load_abb:
             start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
             print("abberation loaded")
-        start_aberrations[mode] += 2
+
+        if params.negative:
+            start_aberrations[mode] += -1.5
+        else:
+            start_aberrations[mode] += 1.5
+
         acc_pred = np.zeros(len(return_modes))
         for it in range(iterations + 1):
 
@@ -102,9 +107,10 @@ def ml_estimate(iterations, scan, params):
             rot90 = False  # align rotation of image with network
             # get prediction
 
-            pred = model.predict(stack)
+            pred = model.predict(stack) / params.factor
+
             if params.use_calibration:
-                pred = pred * 0.5  # + 0.9 * calibration
+                pred = pred + 0.9 * calibration
 
             print("Mode " + str(mode) + " Applied")
             if mode in return_modes:
@@ -296,6 +302,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--use_calibration", help="whether to use calibration", action="store_true",
+    )
+    parser.add_argument(
+        "--negative", help="whether to apply negative coefficient", action="store_true",
+    )
+    parser.add_argument(
+        "--factor", help="divide prediction by number", type=int, default=1,
     )
     parser.add_argument("-repeats", help="apply averaging", type=int, default=1)
     args = parser.parse_args()

@@ -106,7 +106,7 @@ def ml_estimate(iterations, scan, params):
             stack = stack[:, ::-1, :, :]  # correct flip
             rot90 = False  # align rotation of image with network
             # get prediction
-
+            tifffile.imsave(folder + "/full_stack.tif", stack.astype("float32"))
             pred = [x / params.factor for x in model.predict(stack)]
 
             if params.use_calibration:

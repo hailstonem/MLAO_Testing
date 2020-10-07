@@ -171,4 +171,24 @@ def get_calibration(modes):
         for key, value in d.items():
             calibration[int(key)] += float(value) / len(dictlist) / 10
 
+    dictlist2 = []
+    dictlist2.append(
+        {
+            "4": -0.8544403902068735,
+            "5": 0.09452680426300514,
+            "6": 1.6036647653831166,
+            "7": 0.6009264457672837,
+            "8": 0.46596153149660663,
+            "9": -0.53762447275687,
+            "10": 0.23294468574540222,
+            "11": 0.07958616480696953,
+            "12": -1.1000152971870265,
+            "15": -0.5070819409806282,
+            "16": 0.7969388086250985,
+            "21": 0.1574478515535593,
+        }
+    )
+    for d in dictlist2:
+        for key, value in d.items():
+            calibration[int(key)] += float(value) / len(dictlist) / 10
     return calibration[modes]

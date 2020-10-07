@@ -5,34 +5,13 @@ import argparse
 
 import numpy as np
 import tifffile
-
+from calibration import get_calibration
 import grpc
 from PySide2.QtWidgets import QApplication
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
-
-# calibration should be from applied modes
-calibration = (
-    np.array(
-        [
-            -1.4981409992091357,
-            -1.789902743604034,
-            2.7167020300403237,
-            -0.5997019911184909,
-            1.9005382031202318,
-            2.0908874418586496,
-            0.48255226146429797,
-            -0.7884353453293443,
-            -1.2100700587034225,
-            0.5412564309313894,
-            0.39010114120319495,
-            -0.7055745903402566,
-        ]
-    )
-    / 10
-)
 
 
 def ml_estimate(iterations, scan, params):
@@ -47,6 +26,9 @@ def ml_estimate(iterations, scan, params):
 
     model = ModelWrapper()
     bias_modes, return_modes = model.bias_modes, model.return_modes
+
+    # calibration should be from applied modes
+    calibration = get_calibration(return_modes)
 
     channel = grpc.insecure_channel("localhost:50051")
     scanner = ScannerStub(channel)

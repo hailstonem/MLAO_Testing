@@ -104,7 +104,7 @@ def ml_estimate(iterations, scan, params):
 
             pred = model.predict(stack)
             if params.use_calibration:
-                pred = pred + 0.9 * calibration
+                pred = pred * 0.5  # + 0.9 * calibration
 
             print("Mode " + str(mode) + " Applied")
             if mode in return_modes:

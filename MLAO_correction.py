@@ -213,7 +213,7 @@ def capture_image(scanner, timeout=1000, retry_delay=0):
     return_image = np.array(image.data).reshape(image.height, image.width)
     scanner.StopScan(Empty())
 
-    return return_image
+    return return_image.astype("float32")
 
 
 class ModelWrapper:

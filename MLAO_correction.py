@@ -103,7 +103,7 @@ def ml_estimate(iterations, scan, params):
             stack = -stack[np.newaxis, 2:, 2:, :]  # Image is inverted (also clip flyback)
             # stack[stack < 0] = 0  ### is this necessary given we're working with floats?
 
-            stack = stack[:, ::-1, :, :]  # correct flip
+            stack = stack[:, :, ::-1, :]  # new correct flip?
             rot90 = False  # align rotation of image with network
             # get prediction
             tifffile.imsave(

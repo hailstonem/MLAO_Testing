@@ -1,4 +1,10 @@
+import sys
+from collections import namedtuple
 import numpy as np
+
+sys.path.append("..\\ML-Zernicke-estimation\\")
+from fourier import Fraunhofer
+from imagegen import make_betas_polytope
 
 
 class Empty:
@@ -14,18 +20,32 @@ class ScannerPixelRange:
 
 class ZernikeModes:
     def __init__(self, modes, amplitudes):
-        pass
+        self.modes = modes
+        self.amplitudes = amplitudes
 
 
 class ScannerStub:
     ### dummy ScannerStub for testing###
     def __init__(self, channel):
-        pass
+        self.max_order = 6
+        self.nk = (self.max_order + 1) * (self.max_order + 2) // 2
+        self.NA = 1.2
+        self.nd = 1.22 * 500e-9 / (2 * self.NA)
+        self.pixel_size = self.nd / 2
+        self.fh = None
+        self.aberrations = np.zeros(self.nk)
+        self.scan = None
+        self.x = 0
+        self.y = 0
 
-    def SetSLMZernikeModes(self, modes):
-        pass
+    def SetSLMZernikeModes(self, ZM):
+        assert len(ZM.modes) == len(ZM.amplitudes)
+        aberrations = np.zeros(self.nk)
+        aberrations[ZM.modes] = ZM.amplitudes
+        self.aberrations = aberrations
 
     def SetScanPixelRange(self, PixelRange):
+        """Not properly implemented"""
         self.x = PixelRange.x
         self.y = PixelRange.y
 
@@ -33,18 +53,30 @@ class ScannerStub:
         return np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
 
     def StartScan(self, e):
+        image = np.zeros((self.y, self.x)).astype("uint16")
+        image[60, 60] = 2000
+        self.fh = Fraunhofer(
+            wavelength=500e-9, NA=self.NA, N=128, pixel_size=self.pixel_size / 2, n_alpha=6, image=image,
+        )
+        psf = self.fh.psf(self.aberrations)
+        self.scan = self.fh.incoherent(psf, 0)
+
+    def StopScan(self, e):
         pass
 
     def GetScanImages(self, e):
         T = namedtuple("T", ["images"])
-        return T([np.zeros((self.y, self.x))])
+        scan = self.scan
+        self.scan = None
+        return T([ImageWrapper(scan)])
 
     def GetScanImagesLength(self, e):
         T = namedtuple("T", ["length"])
         return T(1)
 
 
-def capture_image(scanner):
-    return np.zeros(
-        (scanner.y, scanner.x), dtype="uint16"
-    )  # np.random.randint(0,65500,(scanner.y,scanner.x))#np.random.randint(0,65500,(scanner.y,scanner.x))
+class ImageWrapper:
+    def __init__(self, image):
+        self.data = -image[:, ::-1]  # inverted
+        self.height = image.shape[0]
+        self.width = image.shape[1]

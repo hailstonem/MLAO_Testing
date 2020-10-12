@@ -184,7 +184,7 @@ def capture_image(scanner):
 """
 
 
-def capture_image(scanner, timeout=1000, retry_delay=0):
+def capture_image(scanner, timeout=5000, retry_delay=10):
     id = scanner.StartScan(Empty()).id
     t_start = time.time()
 
@@ -203,6 +203,7 @@ def capture_image(scanner, timeout=1000, retry_delay=0):
 
         # Timeout if no image found
         if t_elapsed > timeout / 1000:
+            print("TIMEOUT ON IMAGE CAPTURE")
             return None
 
         # retry delay

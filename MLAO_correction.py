@@ -156,6 +156,66 @@ def ml_estimate(iterations, scan, params):
                     json.dump(data, cofile, indent=1)
 
 
+"""
+def capture_image(scanner):
+    # time.sleep(0.5)
+    scanner.StartScan(Empty())
+    # time.sleep(1)
+    t0 = time.time()
+    images_available = False
+    while not images_available:
+        time.sleep(0.1)
+        images_length = scanner.GetScanImagesLength(Empty()).length
+
+        if images_length > 0:
+            time.sleep(0.1)
+            images_available = True
+
+    images = scanner.GetScanImages(Empty()).images
+
+    # assert(len(images) == 1)
+
+    image = images[0]
+
+    return_image = np.array(image.data).reshape(image.height, image.width)
+    scanner.StopScan(Empty())
+
+    return return_image
+"""
+
+
+def capture_image(scanner, timeout=1000, retry_delay=0):
+    id = scanner.StartScan(Empty()).id
+    t_start = time.time()
+
+    # Set image id to search for
+    req_id = ImageStackID()
+    req_id.id = id
+
+    images_found = False
+    while not images_found:
+        images = scanner.GetScanImages(req_id).images
+
+        if len(images):
+            images_found = True
+
+        t_elapsed = time.time() - t_start
+
+        # Timeout if no image found
+        if t_elapsed > timeout / 1000:
+            return None
+
+        # retry delay
+        time.sleep(retry_delay / 1000)
+
+    image = images[0]
+
+    return_image = np.array(image.data).reshape(image.height, image.width)
+    scanner.StopScan(Empty())
+
+    return return_image
+
+
 class ModelWrapper:
     """Stores model specific parameters and applied preprocessing before prediction"""
 
@@ -320,35 +380,15 @@ if __name__ == "__main__":
             Empty,
             ZernikeModes,
             ScannerPixelRange,
-            capture_image,
         )
     else:
         from doptical.api.scanner_pb2_grpc import ScannerStub
-        from doptical.api.scanner_pb2 import Empty, ZernikeModes, ScannerRange, ScannerPixelRange
-
-        def capture_image(scanner):
-            time.sleep(0.5)
-            scanner.StartScan(Empty())
-            time.sleep(1)
-            t0 = time.time()
-            images_available = False
-            while not images_available:
-                time.sleep(0.1)
-                images_length = scanner.GetScanImagesLength(Empty()).length
-
-                if images_length > 0:
-                    time.sleep(0.1)
-                    images_available = True
-
-            images = scanner.GetScanImages(Empty()).images
-
-            # assert(len(images) == 1)
-
-            image = images[0]
-
-            return_image = np.array(image.data).reshape(image.height, image.width)
-            scanner.StopScan(Empty())
-
-            return return_image
+        from doptical.api.scanner_pb2 import (
+            Empty,
+            ZernikeModes,
+            ScannerRange,
+            ScannerPixelRange,
+            ImageStackID,
+        )
 
     ml_estimate(args.iter, args.scan, args)

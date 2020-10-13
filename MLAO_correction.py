@@ -39,8 +39,8 @@ def ml_estimate(iterations, scan, params):
         scan_modes = [scan]
     print(scan_modes)
 
-    if params.disable_mode > 0:
-        modifiable_modes = [r for r in return_modes if r != params.disable_mode]
+    if len(params.disable_mode) > 0:
+        modifiable_modes = [r for r in return_modes if r not in [int(m) for m in params.disable_mode]]
         modifiable_mode_indexes = [en for en, m in enumerate(return_modes) if m in modifiable_modes]
 
     elif not params.correct_bias_only:
@@ -361,7 +361,7 @@ if __name__ == "__main__":
         "--save_abb", help="if true, load intial aberration from json", action="store_true",
     )
     parser.add_argument(
-        "--disable_mode", help="select mode to disable", type=int, default=0,
+        "--disable_mode", help="select mode to disable", nargs="+", type=int, default=[],
     )
     parser.add_argument(
         "--use_calibration", help="whether to use calibration", action="store_true",

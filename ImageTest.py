@@ -27,7 +27,7 @@ def test_image_capture():
     scan_modes = [4, 5, 6, 7, 8, 9, 10]
 
     for mode in scan_modes:
-        for magnitude in [0.5, 1, 1.5, 2]:
+        for magnitude in [0, 0.5, 1, 1.5, 2]:
 
             # Set up scan
             image_dim = (128, 128)  # set as appropriate

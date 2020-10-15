@@ -99,6 +99,9 @@ def ml_estimate(iterations, scan, params):
                     save_tif(temptifname, capture_image(scanner, timeout=5000, retry_delay=10))
 
                     image = capture_image(scanner)
+
+                    if image is None:
+                        raise RuntimeError("Image capture failed")
                     stack[:, :, i_image] += image
 
             # format for CNN

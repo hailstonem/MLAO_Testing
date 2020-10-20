@@ -114,7 +114,7 @@ def ml_estimate(iterations, scan, params):
             tifffile.imsave(
                 folder + "/%03d_%s_full_stack.tif" % (rnd, mode), np.rollaxis(stack.astype("float32"), 3, 1)
             )
-            pred = [x / params.factor for x in model.predict(stack)]
+            pred = [x / params.factor for x in model.predict(stack, split=True)]
 
             if params.use_calibration:
                 pred = pred + 0.9 * calibration
@@ -154,6 +154,12 @@ def ml_estimate(iterations, scan, params):
             image = capture_image(scanner)
             tifname = folder + "/%03d_%s_after.tif" % (rnd, mode)
             save_tif(tifname, image[2:, 2:].astype("float32") / -1)
+            brightness = np.sum(image)
+            old_brightness = brightness.copy()
+            if brightness < old_brightness:
+                start_aberrations[modifiable_modes] = (
+                    start_aberrations[modifiable_modes] + np.array(pred)[modifiable_mode_indexes]
+                )
 
             if params.save_abb:
                 with open("./start_abb.json", "w") as cofile:
@@ -252,21 +258,31 @@ class ModelWrapper:
             21,
         ]
 
-    def predict(self, stack, rot90=False):
+    def predict(self, stack, rot90=False, split=False):
         def rotate(stack, rot90):
             return np.rot90(stack, k=rot90, axes=[1, 2])
 
         if rot90:
             stack = rotate(stack, rot90)
+        stack = (stack.astype("float") - stack.mean()) / max(
+            stack.astype("float").std(), 10e-20
+        )  # prevent div/0
+        if split is False:
+            pred = list(self.model.predict(stack)[0])
+        else:
+            pred = np.mean(
+                [
+                    self.model.predict(stack[:, 0 : stack.shape[1] * 3 // 4, 0 : stack.shape[2] * 3 // 4, :])[
+                        0
+                    ],
+                    self.model.predict(stack[:, stack.shape[1] // 4 :, 0 : stack.shape[2] * 3 // 4, :])[0],
+                    self.model.predict(stack[:, 0 : stack.shape[1] * 3 // 4, stack.shape[2] // 4 :, :])[0],
+                    self.model.predict(stack[:, stack.shape[1] // 4 :, stack.shape[2] // 4 :, :])[0],
+                ],
+                axis=0,
+                keepdims=False,
+            )
 
-        pred = list(
-            self.model.predict(
-                (
-                    (stack.astype("float") - stack.mean())
-                    / max(stack.astype("float").std(), 10e-20)  # prevent div/0
-                )
-            )[0]
-        )
         return pred
 
 
@@ -324,7 +340,7 @@ def make_bias_polytope(start_aberrations, offset_axes, nk, steps=(1)):
     # beta (diffraction-limited), N_beta = cpsf.czern.nk
     beta = np.zeros(nk, dtype=np.float32)
     beta[:] = start_aberrations[:]
-    # beta[0] = 1.0
+    beta[0] = 0.01
     # add offsets to beta
 
     betas = []
@@ -386,6 +402,7 @@ if __name__ == "__main__":
             Empty,
             ZernikeModes,
             ScannerPixelRange,
+            ImageStackID,
         )
     else:
         from doptical.api.scanner_pb2_grpc import ScannerStub

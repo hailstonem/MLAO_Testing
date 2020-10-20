@@ -49,22 +49,32 @@ class ScannerStub:
         self.x = PixelRange.x
         self.y = PixelRange.y
 
+        image = np.zeros((self.y, self.x)).astype("uint16")
+        image[60:62, 60] = 200
+        image[2, 2] = 200
+        image[-2, -2] = 200
+        image[2, -2] = 200
+        image[-2, 2] = 200
+
+        self.fh = Fraunhofer(
+            wavelength=500e-9, NA=self.NA, N=128, pixel_size=self.pixel_size / 1.5, n_alpha=6, image=image,
+        )
+
     def GetAOCalibrationStack(self, list_of_aberrations_lists, pixel_size, image_dim):
         return np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
 
     def StartScan(self, e):
-        image = np.zeros((self.y, self.x)).astype("uint16")
-        image[60, 60] = 2000
-        self.fh = Fraunhofer(
-            wavelength=500e-9, NA=self.NA, N=128, pixel_size=self.pixel_size / 2, n_alpha=6, image=image,
-        )
+
         psf = self.fh.psf(self.aberrations)
-        self.scan = self.fh.incoherent(psf, 0)
+        self.scan = self.fh.incoherent(psf, True)
+
+        T = namedtuple("T", ["id"])(np.random.randint(1000))
+        return T
 
     def StopScan(self, e):
         pass
 
-    def GetScanImages(self, e):
+    def GetScanImages(self, id):
         T = namedtuple("T", ["images"])
         scan = self.scan
         self.scan = None
@@ -73,6 +83,11 @@ class ScannerStub:
     def GetScanImagesLength(self, e):
         T = namedtuple("T", ["length"])
         return T(1)
+
+
+class ImageStackID:
+    def __init__(self):
+        self.id = 0
 
 
 class ImageWrapper:

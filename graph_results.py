@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 
 sys.path.append("..\\ML-Zernicke-estimation\\")
 from fourier import Fraunhofer
-from imagegen import make_betas_polytope
+
+# from imagegen import make_betas_polytope
 
 
 def make_bias_polytope(start_aberrations, offset_axes, nk, steps=(1)):
@@ -59,7 +60,7 @@ def save_phase(folder, prefix, index, est_acc, en):
     fh = Fraunhofer(
         wavelength=500e-9,
         NA=NA,
-        N=248,
+        N=128,
         pixel_size=pixel_size / 2,
         n_alpha=6,
         image=np.ones((24, 24)).astype("uint16"),
@@ -100,6 +101,7 @@ correction = np.array(
         -0.06283185307179551,
     ]
 )
+
 # 28_09_20
 correction = np.array(
     [
@@ -128,6 +130,39 @@ correction = np.array(
     ]
 )
 
+# 121020
+correction = np.array(
+    [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.3769911184307757,
+        0.2513274122871838,
+        0.1256637061435919,
+        -0.06283185307179551,
+        0.06283185307179595,
+        0.06283185307179595,
+        0.1256637061435919,
+        0.06283185307179595,
+        4.440892098500626e-16,
+        0.06283185307179595,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+        -0.06283185307179551,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+    ]
+)
+
+
+def keytoint(d):
+    k, v = d
+    return int(k)
+
 
 class Iterations_dict(UserDict):
     def __init__(self, folder, filelist, *args, **kwargs):
@@ -136,7 +171,7 @@ class Iterations_dict(UserDict):
         if len(filelist) == 1:
             with open(folder + filelist[0]) as openfile:
                 d_file = json.load(openfile)
-                self.data = OrderedDict(sorted(d_file.items()))
+                self.data = OrderedDict(sorted(d_file.items(), key=keytoint))
         else:
             self.data = OrderedDict()
             filelist.sort(key=splitx((0, 2)))
@@ -217,9 +252,11 @@ def main(prefix):
     # convergence plot
     for a in np.moveaxis(est_array, 1, 0):
 
-        plt.plot(a, marker=np.random.choice(["D", "o", "d", "s", "p"]))
+        plt.plot(
+            [str(x + 1) for x in np.arange(len(a))], a, marker=np.random.choice(["D", "o", "d", "s", "p"])
+        )
     plt.legend(
-        [str(int(i) + 1) for i, c in d["Estimated"].items()], loc="upper right", bbox_to_anchor=(1.25, 1),
+        [str(int(i)) for i, c in d["Estimated"].items()], loc="upper right", bbox_to_anchor=(1.25, 1),
     )
     plt.xlabel("Iteration")
     plt.ylabel("Value")

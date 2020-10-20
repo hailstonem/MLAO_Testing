@@ -93,12 +93,12 @@ def ml_estimate(iterations, scan, params):
                     ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
                     scanner.SetSLMZernikeModes(ZM)
                     # if params.dummy:
-                    time.sleep(1)
-
-                    temptifname = folder + "/%03d_%s_%s_temp_.tif" % (rnd, mode, it)
-                    save_tif(temptifname, capture_image(scanner, timeout=5000, retry_delay=10))
+                    time.sleep(1.5)
 
                     image = capture_image(scanner)
+
+                    temptifname = folder + "/%03d_%s_%s_temp_.tif" % (rnd, mode, it)
+                    save_tif(temptifname, image)
 
                     if image is None:
                         raise RuntimeError("Image capture failed")

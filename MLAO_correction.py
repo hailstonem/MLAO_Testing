@@ -24,7 +24,7 @@ def ml_estimate(iterations, scan, params):
     if not os.path.exists(folder):
         os.mkdir(folder)
 
-    model = ModelWrapper()
+    model = ModelWrapper(params.model)
     bias_modes, return_modes = model.bias_modes, model.return_modes
 
     # calibration should be from applied modes
@@ -231,18 +231,16 @@ def capture_image(scanner, timeout=5000, retry_delay=10):
 class ModelWrapper:
     """Stores model specific parameters and applied preprocessing before prediction"""
 
-    def __init__(self):
+    def __init__(self, model_no=1):
 
         print("loading model")
-        self.model = tf.keras.models.load_model(
-            "./models/"
-            # + "28CS-L45-90-45m-N2-MSE-xAR5CCFJ2-e3000-5000r25-175-HN-NB-rlu-A45C67S11DREAL37R21-IM15-TrN3-CA025-ScycLR-Mpl-adW-b25s6-1p200g-mpk5L-p05-92"
-            + "28CM-L45-90-45m-N2-MSE-xAR5CCFLC-e3000-5000r25-175-HN-NB-rlu-A45C67S11DREAL37R21-IM15-TrN3-CA025-ScycLR-Mpl-adW-b25s6-1p200g-mpk5L-p05-99"
-            + "_savedmodel.h5",
-            compile=False,
-        )
+        with open("./models/model_config.json", "r") as modelfile:
+            model_dict = json.load(modelfile)
+        model_name = "./models/" + model_dict[str(model_no)][0] + "_savedmodel.h5"
+        print("model_name")
+        self.model = tf.keras.models.load_model(model_name, compile=False,)
         print("model_loaded")
-
+        self.subtract = model_dict[str(model_no)][1] == "S"
         self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
         self.return_modes = [
             4,
@@ -268,6 +266,10 @@ class ModelWrapper:
         stack = (stack.astype("float") - stack.mean()) / max(
             stack.astype("float").std(), 10e-20
         )  # prevent div/0
+
+        if self.subtract:
+            stack = stack[:, :, :, 1:] - stack[:, :, :, 0:1]
+
         if split is False:
             pred = list(self.model.predict(stack)[0])
         else:
@@ -395,6 +397,7 @@ if __name__ == "__main__":
         "--factor", help="divide prediction by number", type=int, default=1,
     )
     parser.add_argument("-repeats", help="apply averaging", type=int, default=1)
+    parser.add_argument("-model", help="select model number", type=int, default=1)
     args = parser.parse_args()
 
     if args.dummy:

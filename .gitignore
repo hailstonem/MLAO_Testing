@@ -128,3 +128,4 @@ dmypy.json
 results*
 *.png
 *.tif
+.vscode/settings.json

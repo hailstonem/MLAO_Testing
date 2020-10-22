@@ -114,7 +114,7 @@ def ml_estimate(iterations, scan, params):
             tifffile.imsave(
                 folder + "/%03d_%s_full_stack.tif" % (rnd, mode), np.rollaxis(stack.astype("float32"), 3, 1)
             )
-            pred = [x / params.factor for x in model.predict(stack, split=True)]
+            pred = [x / params.factor for x in model.predict(stack, split=False)]
 
             if params.use_calibration:
                 pred = pred + 0.9 * calibration

@@ -28,7 +28,7 @@ def ml_estimate(iterations, scan, params):
     bias_modes, return_modes = model.bias_modes, model.return_modes
 
     # calibration should be from applied modes
-    calibration = get_calibration(return_modes)
+    calibration = get_calibration([7])
     print(calibration)
     channel = grpc.insecure_channel("localhost:50051")
     scanner = ScannerStub(channel)
@@ -40,6 +40,7 @@ def ml_estimate(iterations, scan, params):
     print(scan_modes)
 
     if len(params.disable_mode) > 0:
+        print(params.disable_mode)
         modifiable_modes = [r for r in return_modes if r not in [int(m) for m in params.disable_mode]]
         modifiable_mode_indexes = [en for en, m in enumerate(return_modes) if m in modifiable_modes]
 
@@ -62,14 +63,19 @@ def ml_estimate(iterations, scan, params):
             print("abberation loaded")
 
         if params.negative:
-            start_aberrations[mode] += -1.5
+            if mode:
+                start_aberrations[mode] += -1.5
         else:
-            start_aberrations[mode] += 1.5
+            if mode:
+                start_aberrations[mode] += 1.5
 
         acc_pred = np.zeros(len(return_modes))
+        old_brightness = 0
         for it in range(iterations + 1):
 
-            list_of_aberrations_lists = make_bias_polytope(start_aberrations, bias_modes, 22, steps=[1])
+            list_of_aberrations_lists = make_bias_polytope(
+                start_aberrations, bias_modes, max(return_modes) + 1, steps=[1]
+            )
 
             # Set up scan
             image_dim = (128, 128)  # set as appropriate
@@ -109,6 +115,7 @@ def ml_estimate(iterations, scan, params):
             # stack[stack < 0] = 0  ### is this necessary given we're working with floats?
 
             stack = stack[:, :, ::-1, :]  # new correct flip?
+            # stack = stack[:, ::-1, :, :]  # new correct flip?
             rot90 = False  # align rotation of image with network
             # get prediction
             tifffile.imsave(
@@ -148,7 +155,9 @@ def ml_estimate(iterations, scan, params):
             )
 
             # collect corrected image
-            list_of_aberrations_lists = make_bias_polytope(start_aberrations, bias_modes, 22, steps=[])
+            list_of_aberrations_lists = make_bias_polytope(
+                start_aberrations, bias_modes, max(return_modes) + 1, steps=[]
+            )
             ZM = ZernikeModes(modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
             scanner.SetSLMZernikeModes(ZM)
             image = capture_image(scanner)
@@ -232,30 +241,36 @@ class ModelWrapper:
     """Stores model specific parameters and applied preprocessing before prediction"""
 
     def __init__(self, model_no=1):
+        self.model = None
+        self.model, self.subtract, self.return_modes = self.load_model(model_no)
+        print("model_loaded")
+        self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
 
+    def load_model(self, model_no):
         print("loading model")
         with open("./models/model_config.json", "r") as modelfile:
             model_dict = json.load(modelfile)
         model_name = "./models/" + model_dict[str(model_no)][0] + "_savedmodel.h5"
         print("model_name")
-        self.model = tf.keras.models.load_model(model_name, compile=False,)
-        print("model_loaded")
-        self.subtract = model_dict[str(model_no)][1] == "S"
-        self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
-        self.return_modes = [
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            15,
-            16,
-            21,
-        ]
+        model = tf.keras.models.load_model(model_name, compile=False,)
+        subtract = model_dict[str(model_no)][1] == "S"
+        return_modes = [int(x) for x in model_dict[str(model_no)][2]]
+        if len(return_modes) == 0:
+            return_modes = [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                15,
+                16,
+                21,
+            ]
+        return model, subtract, return_modes
 
     def predict(self, stack, rot90=False, split=False):
         def rotate(stack, rot90):

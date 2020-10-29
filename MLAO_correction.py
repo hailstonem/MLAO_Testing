@@ -25,7 +25,7 @@ def ml_estimate(iterations, scan, params):
         os.mkdir(folder)
 
     model = ModelWrapper(params.model)
-    bias_modes, return_modes = model.bias_modes, model.return_modes
+    bias_magnitude, bias_modes, return_modes = model.bias_magnitude, model.bias_modes, model.return_modes
 
     # calibration should be from applied modes
     calibration = get_calibration([7])
@@ -74,7 +74,7 @@ def ml_estimate(iterations, scan, params):
         for it in range(iterations + 1):
 
             list_of_aberrations_lists = make_bias_polytope(
-                start_aberrations, bias_modes, max(return_modes) + 1, steps=[1]
+                start_aberrations, bias_modes, max(return_modes) + 1, steps=[bias_magnitude]
             )
 
             # Set up scan
@@ -242,6 +242,7 @@ class ModelWrapper:
 
     def __init__(self, model_no=1):
         self.model = None
+        self.bias_magnitude = 1
         self.model, self.subtract, self.return_modes = self.load_model(model_no)
         print("model_loaded")
         self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
@@ -270,6 +271,9 @@ class ModelWrapper:
                 16,
                 21,
             ]
+        self.bias_magnitude = [float(x) for x in model_dict[str(model_no)][3]]
+        if self.bias_magnitude == []:
+            self.bias_magnitude = 1
         return model, subtract, return_modes
 
     def predict(self, stack, rot90=False, split=False):

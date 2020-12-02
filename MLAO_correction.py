@@ -2,8 +2,10 @@ import os
 import time
 import json
 import argparse
-
+from logging import getLogger
 import numpy as np
+from numpy.polynomial.polynomial import Polynomial, polyval
+
 import tifffile
 from calibration import get_calibration
 import grpc
@@ -13,34 +15,177 @@ os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
 
+log = getLogger("mlao_log")
+try:
+    from doptical.api.scanner_pb2_grpc import ScannerStub
+    from doptical.api.scanner_pb2 import (
+        Empty,
+        ZernikeModes,
+        ScannerRange,
+        ScannerPixelRange,
+        ImageStackID,
+    )
+except ImportError:
+    log.warning("Running in Dummy mode")
+    from dummy_scanner import (
+        ScannerStub,
+        Empty,
+        ZernikeModes,
+        ScannerPixelRange,
+        ImageStackID,
+    )
 
-def ml_estimate(iterations, scan, params):
 
+def Intensity_Metric(imagegen, centerpixel=50, centerrange=15):
+    centermin = centerpixel - centerrange
+    centermax = centerpixel + centerrange
+    intensities = [np.sum(im[centermin:centermax, centermin:centermax]) for im in imagegen]
+    return np.array(intensities)
+
+
+def optimisation(coeffarray, metric, degree_fitting=2):
+
+    new_series_fit = Polynomial.fit(coeffarray, metric, degree_fitting)
+
+    new_coeffarray = np.linspace(coeffarray[0], coeffarray[-1], 101)
+
+    new_series = polyval(new_coeffarray, new_series_fit.convert().coef)
+
+    maxcoeff = new_coeffarray[np.argmax(new_series)]
+    # print(maxcoeff)
+
+    return maxcoeff
+
+
+def set_slm_and_capture_image(scanner, image_dim, aberration, aberration_modes, repeats):
+    image = np.zeros(image_dim)
+    for _ in range(repeats):
+        log.debug([np.round(a, 1) for a in aberration])
+
+        ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
+        scanner.SetSLMZernikeModes(ZM)
+
+        time.sleep(1.5)
+        image += capture_image(scanner)
+
+    return image
+
+
+def polynomial_estimate(bias_modes, bias_magnitude, params):
+    """Performs correction based on 3n polynomial fitting. Same API as ml_estimate, but also requires bias_modes parameter"""
+    iterations = params.iter
+
+    rnd = time_prefix("./results")
+    folder = params.path + "/" + time.strftime("%y%m%" + "d") + params.experiment_name
+    jsonfilelist = []
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    channel = grpc.insecure_channel("localhost:50051")
+    scanner = ScannerStub(channel)
+
+    for mode in params.scan_modes:
+
+        start_aberrations = np.zeros((max(bias_modes) + 1))
+        if params.load_abb:
+            start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
+            log.debug("abberation loaded")
+
+        if mode:
+            start_aberrations[mode] += params.magnitude
+
+        for it in range(iterations + 1):
+            log.info(f"it {it} coefficients:{[np.round(a, 1) for a in start_aberrations]}")
+            # Set up scan
+            image_dim = (128, 128)  # set as appropriate
+            scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1], y=image_dim[0]))
+            pred = np.zeros((max(bias_modes) + 1))
+            for bias in bias_modes:
+                # Get lists of biases and aberrations
+                list_of_aberrations_lists = make_bias_polytope(
+                    start_aberrations, [bias], max(bias_modes) + 1, steps=[bias_magnitude]
+                )
+                aberration_modes = [int(i) for i in range(len(start_aberrations))]
+                stack = np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
+                # randomize image collection to minimise effects of bleaching
+                shuffled_order = np.arange(len(list_of_aberrations_lists))
+                if params.shuffle:
+                    np.random.shuffle(shuffled_order)
+
+                # Get stack of images
+                for i_image in shuffled_order:
+                    aberration = list_of_aberrations_lists[i_image]
+
+                    image = set_slm_and_capture_image(
+                        scanner, image_dim, aberration, aberration_modes, params.repeats
+                    )
+
+                    temptifname = folder + "/%03d_%s_%s_temp_.tif" % (rnd, mode, it)
+                    save_tif(temptifname, image)
+
+                    stack[:, :, i_image] = image
+
+                # format
+                stack = -stack[2:, 2:, :]  # Image is inverted (also clip flyback)
+                stack = stack[:, ::-1, :]  # new correct flip?
+                stack = np.rollaxis(stack, 2, 0)
+                # calculate metric
+                intensities = Intensity_Metric(stack, stack.shape[1] // 2, params.centerrange)
+                coeffarray = [x[bias] for x in list_of_aberrations_lists]
+                optimal = optimisation(coeffarray, intensities, degree_fitting=2)
+                pred[bias] = optimal - start_aberrations[bias]
+                start_aberrations[bias] = optimal  # use this as starting point for next correction
+
+            # save to json and tif
+            jsonfile = folder + "/%03d_%s_coefficients.json" % (rnd, mode,)
+            # if not params.correct_bias_only:
+            #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
+            # else:
+            coeff_to_json(
+                jsonfile,
+                tuple(start_aberrations),
+                bias_modes,
+                pred[bias_modes],
+                it + 1,
+                brightness=np.mean(stack[0]),
+            )
+
+            tifname = folder + "/%03d_%s_iterations.tif" % (rnd, mode)
+            save_tif(tifname, stack[0, :, :].astype("float32"))  # /stack[0, :, :, 0].max())
+        jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
+    return jsonfilelist
+
+
+def ml_estimate(params):
+
+    iterations, scan = params.iter, params.scan
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 
     params should specify correct_bias_only load_abb and save_abb"""
 
     rnd = time_prefix("./results")
-    folder = "./results/" + time.strftime("%y%m%" + "d")
+    folder = "./results/" + time.strftime("%y%m%" + "d") + params.experiment_name
     if not os.path.exists(folder):
         os.mkdir(folder)
-
+    jsonfilelist = []
     model = ModelWrapper(params.model)
     bias_magnitude, bias_modes, return_modes = model.bias_magnitude, model.bias_modes, model.return_modes
 
     # calibration should be from applied modes
     calibration = get_calibration([7])
-    print(calibration)
+    log.debug(calibration)
     channel = grpc.insecure_channel("localhost:50051")
     scanner = ScannerStub(channel)
 
     if scan == -1:
         scan_modes = return_modes
+    elif scan == -2:
+        scan_modes = bias_modes
     else:
         scan_modes = [scan]
-    print(scan_modes)
+    log.debug(f"scan modes: {scan_modes}")
 
     if len(params.disable_mode) > 0:
-        print(params.disable_mode)
+        log.debug(params.disable_mode)
         modifiable_modes = [r for r in return_modes if r not in [int(m) for m in params.disable_mode]]
         modifiable_mode_indexes = [en for en, m in enumerate(return_modes) if m in modifiable_modes]
 
@@ -51,7 +196,7 @@ def ml_estimate(iterations, scan, params):
     else:
         modifiable_modes = bias_modes
         modifiable_mode_indexes = [en for en, m in enumerate(return_modes) if m in modifiable_modes]
-    print("mm" + str(modifiable_modes))
+    log.debug("mm" + str(modifiable_modes))
 
     # loop over each mode and test to see if network estimates it
     for mode in scan_modes:
@@ -60,78 +205,67 @@ def ml_estimate(iterations, scan, params):
         start_aberrations = np.zeros((max(return_modes) + 1))
         if params.load_abb:
             start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
-            print("abberation loaded")
+            log.debug("abberation loaded")
 
-        if params.negative:
-            if mode:
-                start_aberrations[mode] += -1.5
-        else:
-            if mode:
-                start_aberrations[mode] += 1.5
+        if mode:
+            start_aberrations[mode] += params.magnitude
 
         acc_pred = np.zeros(len(return_modes))
         old_brightness = 0
+
         for it in range(iterations + 1):
-
-            list_of_aberrations_lists = make_bias_polytope(
-                start_aberrations, bias_modes, max(return_modes) + 1, steps=[bias_magnitude]
-            )
-
+            log.info(f"it {it} coefficients:{[np.round(a, 1) for a in start_aberrations]}")
             # Set up scan
             image_dim = (128, 128)  # set as appropriate
             scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1], y=image_dim[0]))
 
-            # Get stack of images
+            # Get lists of biases and aberrations
+            list_of_aberrations_lists = make_bias_polytope(
+                start_aberrations, bias_modes, max(return_modes) + 1, steps=[bias_magnitude]
+            )
             aberration_modes = [int(i) for i in range(len(start_aberrations))]
-            print(aberration_modes)
             stack = np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
 
             # randomize image collection to minimise effects of bleaching
             shuffled_order = np.arange(len(list_of_aberrations_lists))
-            np.random.shuffle(shuffled_order)
+            if params.shuffle:
+                np.random.shuffle(shuffled_order)
 
             # Get stack of images
             for i_image in shuffled_order:
-                for _ in range(params.repeats):
-                    aberration = list_of_aberrations_lists[i_image]
-                    print([np.round(a, 1) for a in aberration])
+                aberration = list_of_aberrations_lists[i_image]
 
-                    ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
-                    scanner.SetSLMZernikeModes(ZM)
-                    # if params.dummy:
-                    time.sleep(1.5)
+                image = set_slm_and_capture_image(
+                    scanner, image_dim, aberration, aberration_modes, params.repeats
+                )
 
-                    image = capture_image(scanner)
+                temptifname = folder + "/%03d_%s_%s_temp_.tif" % (rnd, mode, it)
+                save_tif(temptifname, image)
 
-                    temptifname = folder + "/%03d_%s_%s_temp_.tif" % (rnd, mode, it)
-                    save_tif(temptifname, image)
-
-                    if image is None:
-                        raise RuntimeError("Image capture failed")
-                    stack[:, :, i_image] += image
+                if image is None:
+                    raise RuntimeError("Image capture failed")
+                stack[:, :, i_image] = image
 
             # format for CNN
             stack = -stack[np.newaxis, 2:, 2:, :]  # Image is inverted (also clip flyback)
-            # stack[stack < 0] = 0  ### is this necessary given we're working with floats?
-
             stack = stack[:, :, ::-1, :]  # new correct flip?
-            # stack = stack[:, ::-1, :, :]  # new correct flip?
-            rot90 = False  # align rotation of image with network
-            # get prediction
+
+            """rot90 = False  # align rotation of image with network
+            # save images
             tifffile.imsave(
                 folder + "/%03d_%s_full_stack.tif" % (rnd, mode), np.rollaxis(stack.astype("float32"), 3, 1)
-            )
-            pred = [x / params.factor for x in model.predict(stack, split=False)]
+            )"""
 
+            pred = [x / params.factor for x in model.predict(stack, split=False)]
             if params.use_calibration:
                 pred = pred + 0.9 * calibration
 
-            print("Mode " + str(mode) + " Applied")
             if mode in return_modes:
-                print("Mode " + str(mode) + " Estimate = " + str(pred[return_modes.index(mode)]))
+                log.info(f"Mode {mode} Applied; Estimate = {str(pred[return_modes.index(mode)])}")
 
             # save to json and tif
-            jsonfile = folder + "/%03d_%s_coefficients.json" % (rnd, mode,)
+            jsonfile = f"{folder}/{rnd:03d}_{mode}_coefficients.json"
+            jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
             # if not params.correct_bias_only:
             #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
             # else:
@@ -141,9 +275,10 @@ def ml_estimate(iterations, scan, params):
                 modifiable_modes,
                 [pred[i] for i in modifiable_mode_indexes],
                 it + 1,
+                brightness=np.mean(stack[0, :, :, 0]),
             )
 
-            tifname = folder + "/%03d_%s_before.tif" % (rnd, mode)
+            tifname = folder + "/%03d_%s_iterations.tif" % (rnd, mode)
             save_tif(tifname, stack[0, :, :, 0].astype("float32"))  # /stack[0, :, :, 0].max())
 
             acc_pred += pred
@@ -155,14 +290,17 @@ def ml_estimate(iterations, scan, params):
             )
 
             # collect corrected image
-            list_of_aberrations_lists = make_bias_polytope(
-                start_aberrations, bias_modes, max(return_modes) + 1, steps=[]
-            )
-            ZM = ZernikeModes(modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
-            scanner.SetSLMZernikeModes(ZM)
-            image = capture_image(scanner)
-            tifname = folder + "/%03d_%s_after.tif" % (rnd, mode)
-            save_tif(tifname, image[2:, 2:].astype("float32") / -1)
+            if it == iterations:
+
+                list_of_aberrations_lists = make_bias_polytope(
+                    start_aberrations, bias_modes, max(return_modes) + 1, steps=[]
+                )
+                ZM = ZernikeModes(modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
+                scanner.SetSLMZernikeModes(ZM)
+                time.sleep(1.5)  # wait to settle
+                image = capture_image(scanner)
+                tifname = folder + "/%03d_%s_iterations.tif" % (rnd, mode)
+                save_tif(tifname, image[2:, 2:].astype("float32") / -1)
             brightness = np.sum(image)
             old_brightness = brightness.copy()
             if brightness < old_brightness:
@@ -174,6 +312,7 @@ def ml_estimate(iterations, scan, params):
                 with open("./start_abb.json", "w") as cofile:
                     data = dict(zip(return_modes, [float(p) for p in start_aberrations[return_modes]]))
                     json.dump(data, cofile, indent=1)
+    return jsonfilelist
 
 
 """
@@ -223,8 +362,7 @@ def capture_image(scanner, timeout=5000, retry_delay=10):
 
         # Timeout if no image found
         if t_elapsed > timeout / 1000:
-            print("TIMEOUT ON IMAGE CAPTURE")
-            return None
+            raise RuntimeError("Image capture failed: Timeout on image capture")
 
         # retry delay
         time.sleep(retry_delay / 1000)
@@ -244,15 +382,15 @@ class ModelWrapper:
         self.model = None
         self.bias_magnitude = 1
         self.model, self.subtract, self.return_modes = self.load_model(model_no)
-        print("model_loaded")
+        log.debug("model_loaded")
         self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
 
     def load_model(self, model_no):
-        print("loading model")
+        log.debug("loading model")
         with open("./models/model_config.json", "r") as modelfile:
             model_dict = json.load(modelfile)
         model_name = "./models/" + model_dict[str(model_no)][0] + "_savedmodel.h5"
-        print("model_name")
+        log.debug("model_name")
         model = tf.keras.models.load_model(model_name, compile=False,)
         subtract = model_dict[str(model_no)][1] == "S"
         return_modes = [int(x) for x in model_dict[str(model_no)][2]]
@@ -319,11 +457,12 @@ def append_to_json(filename, new_data):
         json.dump(data, cofile, indent=1)
 
 
-def coeff_to_json(filename, start_aberrations, return_modes, pred, iterations):
+def coeff_to_json(filename, start_aberrations, return_modes, pred, iterations, brightness):
     coeffs = dict()
     coeffs[str(iterations)] = {
         "Applied": dict(zip(return_modes, [float(start_aberrations[p]) for p in return_modes],)),
         "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
+        "Brightness": float(brightness),
     }
     append_to_json(filename, coeffs)
 
@@ -417,6 +556,20 @@ if __name__ == "__main__":
     )
     parser.add_argument("-repeats", help="apply averaging", type=int, default=1)
     parser.add_argument("-model", help="select model number", type=int, default=1)
+    parser.add_argument(
+        "-log", help="select logging level: info/debug/warning/error", type=str, default="info"
+    )
+    parser.add_argument("-path", help="output path", type=str, default=".//results")
+    parser.add_argument("-experiment_name", help="add name for folder", type=str, default="")
+    if args.log == "info":
+        log.setLevel(20)
+    elif args.log == "debug":
+        log.setLevel(10)
+    elif args.log == "warning":
+        log.setLevel(30)
+    elif args.log == "error":
+        log.setLevel(40)
+
     args = parser.parse_args()
 
     if args.dummy:
@@ -427,14 +580,4 @@ if __name__ == "__main__":
             ScannerPixelRange,
             ImageStackID,
         )
-    else:
-        from doptical.api.scanner_pb2_grpc import ScannerStub
-        from doptical.api.scanner_pb2 import (
-            Empty,
-            ZernikeModes,
-            ScannerRange,
-            ScannerPixelRange,
-            ImageStackID,
-        )
-
-    ml_estimate(args.iter, args.scan, args)
+    ml_estimate(args)

@@ -8,8 +8,9 @@ import tifffile
 import matplotlib
 import matplotlib.pyplot as plt
 
+matplotlib.use("AGG")
 sys.path.append("..\\ML-Zernicke-estimation\\")
-from fourier import Fraunhofer
+#  # if plotting phase
 
 # from imagegen import make_betas_polytope
 
@@ -52,6 +53,8 @@ def splitx(x):
 
 
 def save_phase(folder, prefix, index, est_acc, en):
+    from fourier import Fraunhofer
+
     max_order = 6
     nk = (max_order + 1) * (max_order + 2) // 2
     NA = 1.2
@@ -157,6 +160,32 @@ correction = np.array(
         4.440892098500626e-16,
     ]
 )
+correction = np.array(
+    [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.2513274122871838,
+        0.06283185307179595,
+        0.06283185307179595,
+        0.06283185307179595,
+        0.06283185307179595,
+        0.06283185307179595,
+        0.1256637061435919,
+        -2.243994752564138,
+        4.440892098500626e-16,
+        0.06283185307179595,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+        -0.06283185307179551,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+        4.440892098500626e-16,
+    ]
+)
 
 
 def keytoint(d):
@@ -169,7 +198,7 @@ class Iterations_dict(UserDict):
         super().__init__(*args, **kwargs)
         # if just one file, we load this, to iterate through
         if len(filelist) == 1:
-            with open(folder + filelist[0]) as openfile:
+            with open(folder + "\\" + filelist[0]) as openfile:
                 d_file = json.load(openfile)
                 self.data = OrderedDict(sorted(d_file.items(), key=keytoint))
         else:
@@ -186,14 +215,17 @@ class Iterations_dict(UserDict):
                         print("No matching dict found")
 
 
-def main(prefix):
-    folder = ".//results//"
+def main(prefix, folder):
     # make output path
     if not os.path.isdir(folder + "//" + prefix + "//"):
         os.mkdir(folder + "//" + prefix + "//")
 
     filelist = [f for f in os.listdir(folder) if (f.endswith("json") and f.startswith(prefix))]
+    print(folder)
+    graph(prefix, folder, filelist)
 
+
+def graph(prefix, folder, filelist):
     # print(filelist)
     plt.figure()
     applied = []
@@ -229,9 +261,9 @@ def main(prefix):
         estimated.append(est_acc.copy())
         plt.scatter(index, est_acc)
 
-        save_phase(folder, prefix, index, est_acc, int(en))
+        # save_phase(folder, prefix, index, est_acc, int(en))
 
-        save_phase(folder, prefix, index, applied[-1], int(en))
+        # save_phase(folder, prefix, index, applied[-1], int(en))
 
     # all-in-one plot
     plt.tight_layout(rect=[0, 0, 0.8, 1])
@@ -244,7 +276,7 @@ def main(prefix):
     plt.ylim([-2, 2])
     plt.xlabel("Noll index")
     # plt.scatter(indexes,estimated)
-    plt.savefig(folder + "//" + prefix + "//_estimates.png")
+    plt.savefig(folder + "//" + prefix + "_estimates.png")
 
     est_array = np.array(estimated)
     plt.cla()
@@ -259,10 +291,16 @@ def main(prefix):
         [str(int(i)) for i, c in d["Estimated"].items()], loc="upper right", bbox_to_anchor=(1.25, 1),
     )
     plt.xlabel("Iteration")
-    plt.ylabel("Value")
-    plt.savefig(folder + "//" + prefix + "//_convergence.png")
+    plt.ylabel("Radians")
+    plt.savefig(folder + "//" + prefix + "_convergence.png")
 
     plt.cla()
+    # brightness plot
+    plt.plot(d["Brightness"])
+    plt.xlabel("Iteration")
+    plt.ylabel("Brightness")
+    plt.savefig(folder + "//" + prefix + "_brightness.png")
+    """
     plt.scatter([str(int(i) + 1) for i, c in d["Estimated"].items()], est_acc)
     plt.scatter(
         [str(int(i) + 1) for i, c in d["Estimated"].items()],
@@ -271,16 +309,20 @@ def main(prefix):
     plt.legend(["MLAO", "Conventional"], loc="upper right", bbox_to_anchor=(1.25, 1))
     plt.savefig(folder + "//" + prefix + "//_comparison.png")
     plt.ylabel("Radians")
-    plt.xlabel("Noll coefficient (1-indexed)")
+    plt.xlabel("Noll coefficient (1-indexed)")"""
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-prefix", help="runs in dummy mode without calling doptical/grpc", type=str)
-
+    parser.add_argument("-prefix", help="common starting characters in filenames", type=str)
+    parser.add_argument("-folder", help="specify folder", type=str, default=".//results//")
+    parser.add_argument("-parent", help="specify parent", type=str, default=None)
     args = parser.parse_args()
-    if args.prefix is not None:
-        main(args.prefix)
+    if args.parent is not None:
+        for f in os.listdir(args.parent):
+            main("1", args.parent + f + "\\")
+    elif args.prefix is not None:
+        main(args.prefix, args.folder)
     else:
         print("specify prefix")
 

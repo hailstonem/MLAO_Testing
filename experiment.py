@@ -148,10 +148,17 @@ if __name__ == "__main__":
     #    "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
     # )
     parser.add_argument(
-        "-stability", help="Run 18 iterations of correction using system aberrations", action="store_true"
+        "-stability",
+        help="Run 18 iterations of correction using system aberrations. Uses parameters from specified model",
+        action="store_true",
     )
-    parser.add_argument("-single_abb", help="Plus/minus of specified aberration", type=int, default=0)
-    parser.add_argument("-single_abb_mag", help="Plus/minus of specified aberration", type=int, default=3)
+    parser.add_argument(
+        "-single_abb",
+        help="Plus/minus of specified aberration.  Also specify single_abb_mag",
+        type=int,
+        default=0,
+    )
+    parser.add_argument("-single_abb_mag", help="single_abb Aberration magnitude", type=float, default=3)
     parser.add_argument(
         "-quadratic", help="Run conventional (quadratic) correction over all modes", type=int, default=0
     )
@@ -160,7 +167,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "-method",
-        help="Specifies experiment type FOR ALL EXPERIMENTS:'mlao' or 'comparison' or 'quadratic'",
+        help="Specifies experiment type FOR ALL EXPERIMENTS:'mlao'(default) or 'comparison' or 'quadratic'",
         type=str,
         default="mlao",
     )

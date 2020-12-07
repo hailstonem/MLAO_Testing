@@ -55,28 +55,29 @@ def Experiment(method, params):
             print(folder)
             graph(prefix, str(folder), [name])
 
-    if method == "quadratic":
-        if params.bias_modes and params.bias_magnitude:
-
-            jsonfilelist = polynomial_estimate(params.bias_modes, params.bias_magnitude, params)
-            graph_exp(jsonfilelist)
-        else:
+    if method in ["quadratic", "q"]:
+        if not (params.bias_modes and params.bias_magnitude):
+            if not params.model:
+                log.warning(
+                    "Possible missing Experiment Parameters: model, or bias_modes and bias_magnitude: falling back to model 0"
+                )
             model = ModelWrapper(params.model)
-            jsonfilelist = polynomial_estimate(model.bias_modes, model.bias_magnitude, params)
+        jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
+        graph_exp(jsonfilelist)
 
-    elif method == "mlao":
+    elif method in ["mlao", "m"]:
         jsonfilelist = ml_estimate(params)
         graph_exp(jsonfilelist)
 
-    elif method == "comparison":
+    elif method in ["comparison", "compare", "c"]:
         jsonfilelist = ml_estimate(params)
         graph_exp(jsonfilelist)
         model = ModelWrapper(params.model)
-        jsonfilelist = polynomial_estimate(model.bias_modes, model.bias_magnitude, params)
+        jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
         graph_exp(jsonfilelist)
 
     else:
-        log.warning("Experiment Parameters not recognised")
+        log.warning("Experiment Parameters not recognised: make sure 'method' is set correctly")
 
 
 def run_experiments(experiments):
@@ -96,7 +97,7 @@ def run_experiments(experiments):
         log.info(f"----QUADRATIC ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
     # Stability: scan 0 use bias_only 15 iterations
     if experiments.stability:
-        params.update(scan=0, iter=18, experiment_name=f"stability_M{experiments.model}")
+        params.update(scan=0, iter=18, experiment_name=f"_stability_M{experiments.model}")
         Experiment("mlao", params)
         log.info(f"----STABILITY ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
     # Single Large Abb: pos and negative at specified magnitude
@@ -167,7 +168,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "-method",
-        help="Specifies experiment type FOR ALL EXPERIMENTS:'mlao'(default) or 'comparison' or 'quadratic'",
+        help="Specifies experiment type FOR ALL EXPERIMENTS:'mlao'(default) or 'comparison' or 'quadratic' (short form: m,c,q)",
         type=str,
         default="mlao",
     )

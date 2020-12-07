@@ -88,7 +88,7 @@ def run_experiments(experiments):
     # calibrate: run quadratic correction for calibrate iterations
     if experiments.quadratic:
         params.update(
-            scan_modes=[0],
+            scan=0,
             iter=experiments.quadratic,
             use_bias_only=True,
             experiment_name=f"_quadratic_M{experiments.model}",

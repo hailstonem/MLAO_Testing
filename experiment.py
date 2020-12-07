@@ -35,7 +35,7 @@ class mlao_parameters:
         self.factor = 1
         self.repeats = 1
         self.magnitude = 1.5
-        self.model = 0
+        self.modelno = 0
         self.bias_modes = False
         self.bias_magnitude = False
         # self.centerpixel = 64
@@ -133,7 +133,7 @@ def run_experiments(experiments):
     if experiments.scan_all:
         params.update(
             scan=-1,
-            iter=15,
+            iter=5,
             magnitude=experiments.scan_all,
             use_bias_only=False,
             experiment_name=f"_scan_all_M{experiments.model}",

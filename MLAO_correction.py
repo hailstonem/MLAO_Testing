@@ -441,12 +441,13 @@ class ModelWrapper:
         log.debug("loading model")
         with open("./models/model_config.json", "r") as modelfile:
             model_dict = json.load(modelfile)
+            log.debug(model_dict[str(model_no)])
         model_name = "./models/" + model_dict[str(model_no)][0] + "_savedmodel.h5"
         log.debug("model_name")
         model = tf.keras.models.load_model(model_name, compile=False,)
         subtract = model_dict[str(model_no)][1] == "S"
-        return_modes = [int(x) for x in model_dict[str(model_no)][2]]
-        if len(return_modes) == 0:
+        self.return_modes = [int(x) for x in model_dict[str(model_no)][2]]
+        if len(self.return_modes) == 0:
             self.return_modes = [
                 4,
                 5,
@@ -462,6 +463,7 @@ class ModelWrapper:
                 21,
             ]
         self.bias_magnitude = [float(x) for x in model_dict[str(model_no)][3]]
+        log.debug(self.bias_magnitude)
         if self.bias_magnitude == []:
             self.bias_magnitude = 1
         return model, subtract, self.return_modes

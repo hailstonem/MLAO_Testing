@@ -86,7 +86,15 @@ def polynomial_estimate(bias_modes, bias_magnitude, params):
     channel = grpc.insecure_channel("localhost:50051")
     scanner = ScannerStub(channel)
 
-    for mode in params.scan_modes:
+    if params.scan == -1:
+        scan_modes = return_modes
+    elif params.scan == -2:
+        scan_modes = bias_modes
+    else:
+        scan_modes = [params.scan]
+    log.debug(f"scan modes: {scan_modes}")
+
+    for mode in scan_modes:
 
         start_aberrations = np.zeros((max(bias_modes) + 1))
         if params.load_abb:
@@ -102,7 +110,7 @@ def polynomial_estimate(bias_modes, bias_magnitude, params):
             image_dim = (128, 128)  # set as appropriate
             scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
             pred = np.zeros((max(bias_modes) + 1))
-            for bias in bias_modes:
+            for bn, bias in enumerate(bias_modes):
                 # Get lists of biases and aberrations
                 list_of_aberrations_lists = make_bias_polytope(
                     start_aberrations, [bias], max(bias_modes) + 1, steps=[bias_magnitude]
@@ -135,6 +143,11 @@ def polynomial_estimate(bias_modes, bias_magnitude, params):
                 optimal = optimisation(coeffarray, intensities, degree_fitting=2)
                 pred[bias] = optimal - start_aberrations[bias]
                 start_aberrations[bias] = optimal  # use this as starting point for next correction
+                # save tif and brightness from image before correction
+                if bn == 0:
+                    log.debug("saving tif")
+                    save_tif(tifname, stack[0, :, :].astype("float32"))
+                    brightness = np.mean(stack[0])
 
             # save to json and tif
             jsonfile = folder + "/%03d_%s_coefficients.json" % (rnd, mode,)

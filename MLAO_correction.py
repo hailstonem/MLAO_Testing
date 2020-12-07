@@ -348,12 +348,11 @@ def ml_estimate(params):
                 list_of_aberrations_lists = make_bias_polytope(
                     start_aberrations, bias_modes, max(return_modes) + 1, steps=[]
                 )
-                ZM = ZernikeModes(modes=aberration_modes, amplitudes=list_of_aberrations_lists[0])
-                scanner.SetSLMZernikeModes(ZM)
-                time.sleep(1.5)  # wait to settle
-                image = capture_image(scanner)
-                tifname = folder + "/%03d_%s_iterations.tif" % (rnd, mode)
-                save_tif(tifname, image[2:, 2:].astype("float32") / -1)
+                image = set_slm_and_capture_image(
+                    scanner, image_dim, list_of_aberrations_lists[0], aberration_modes, 1
+                )
+                save_tif(tifname, image[2:, 2::-1].astype("float32") / -1)
+
             brightness = np.sum(image)
             old_brightness = brightness.copy()
             if brightness < old_brightness:

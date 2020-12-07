@@ -448,7 +448,7 @@ class ModelWrapper:
         subtract = model_dict[str(model_no)][1] == "S"
         return_modes = [int(x) for x in model_dict[str(model_no)][2]]
         if len(return_modes) == 0:
-            return_modes = [
+            self.return_modes = [
                 4,
                 5,
                 6,
@@ -465,7 +465,7 @@ class ModelWrapper:
         self.bias_magnitude = [float(x) for x in model_dict[str(model_no)][3]]
         if self.bias_magnitude == []:
             self.bias_magnitude = 1
-        return model, subtract, return_modes
+        return model, subtract, self.return_modes
 
     def predict(self, stack, rot90=False, split=False):
         def rotate(stack, rot90):
@@ -495,7 +495,10 @@ class ModelWrapper:
                 axis=0,
                 keepdims=False,
             )
-
+        if len(pred) != len(self.return_modes):
+            log.warning(
+                f"Mismatch in returned modes: predicted:{len(pred)}, expected: {len(self.return_modes)}"
+            )
         return pred
 
 

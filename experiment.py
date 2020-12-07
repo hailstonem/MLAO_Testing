@@ -82,7 +82,7 @@ def Experiment(method, params):
 
 def run_experiments(experiments):
     "Run repeatable series of experiments for testing different ML models and comparing to conventional correction"
-    params = mlao_parameters(modelno=experiments.model)
+    params = mlao_parameters(modelno=experiments.model, correct_bias_only=experiments.correct_bias_only,)
     t0 = time.time()
     log.info("----EXPERIMENTS START----")
     # calibrate: run quadratic correction for calibrate iterations
@@ -165,7 +165,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("-scan_bias", help="", type=float, default=0)
     parser.add_argument("-scan_all", help="", type=float, default=0)
-
+    parser.add_argument(
+        "--correct_bias_only", help="ignore model estimates other than bias modes", action="store_true",
+    )
     parser.add_argument(
         "-method",
         help="Specifies experiment type FOR ALL EXPERIMENTS:'mlao'(default) or 'comparison' or 'quadratic' (short form: m,c,q)",

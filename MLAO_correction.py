@@ -15,6 +15,7 @@ os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
 
+tf.get_logger().setLevel("ERROR")
 log = getLogger("mlao_log")
 try:
     from doptical.api.scanner_pb2_grpc import ScannerStub

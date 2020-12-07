@@ -232,9 +232,12 @@ def graph(prefix, folder, filelist):
     estimated = []
     indexes = []
     first = True
+
     # single_file = False
 
     it_dict = Iterations_dict(folder, filelist)
+
+    brightness = np.zeros((len(it_dict),))
     for en, d in it_dict.items():
 
         if first == True:
@@ -260,7 +263,8 @@ def graph(prefix, folder, filelist):
         est_acc += np.array([c for i, c in d["Estimated"].items()])
         estimated.append(est_acc.copy())
         plt.scatter(index, est_acc)
-
+        if "Brightness" in d:
+            brightness[int(en) - 1] = d["Brightness"]
         # save_phase(folder, prefix, index, est_acc, int(en))
 
         # save_phase(folder, prefix, index, applied[-1], int(en))
@@ -287,19 +291,27 @@ def graph(prefix, folder, filelist):
         plt.plot(
             [str(x + 1) for x in np.arange(len(a))], a, marker=np.random.choice(["D", "o", "d", "s", "p"])
         )
+
     plt.legend(
         [str(int(i)) for i, c in d["Estimated"].items()], loc="upper right", bbox_to_anchor=(1.25, 1),
     )
     plt.xlabel("Iteration")
     plt.ylabel("Radians")
+    plt.tight_layout()
     plt.savefig(folder + "//" + prefix + "_convergence.png")
 
     plt.cla()
     # brightness plot
-    plt.plot(d["Brightness"])
-    plt.xlabel("Iteration")
-    plt.ylabel("Brightness")
-    plt.savefig(folder + "//" + prefix + "_brightness.png")
+    if np.sum(brightness) > 0:
+
+        plt.plot(np.arange(len(brightness)) + 1, brightness)
+        plt.xlabel("Iteration")
+        plt.ylabel("Mean Brightness")
+        # plt.scatter(indexes,estimated)
+        plt.tight_layout()
+        plt.savefig(folder + "//" + prefix + "_brightness.png")
+        plt.cla()
+
     """
     plt.scatter([str(int(i) + 1) for i, c in d["Estimated"].items()], est_acc)
     plt.scatter(

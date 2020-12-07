@@ -588,9 +588,7 @@ if __name__ == "__main__":
         default=-1,
     )
     parser.add_argument(
-        "--correct_bias_only",
-        help="values>3 apply 1 radian of the specified mode, 0-3 apply no aberration, -1 scans through each mode and corrects",
-        action="store_true",
+        "--correct_bias_only", help="ignore model estimates other than bias modes", action="store_true",
     )
     parser.add_argument(
         "--load_abb", help="if true, load intial aberration from json", action="store_true",

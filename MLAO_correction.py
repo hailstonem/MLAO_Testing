@@ -67,8 +67,9 @@ def set_slm_and_capture_image(scanner, image_dim, aberration, aberration_modes, 
         scanner.SetSLMZernikeModes(ZM)
 
         time.sleep(1.5)
-        image += capture_image(scanner)
-
+        image += capture_image(scanner)[2:, 2:]
+    image = -image  # Image is inverted (also clip flyback)
+    image = image[:, ::-1]  # new correct flip?
     return image
 
 
@@ -99,7 +100,7 @@ def polynomial_estimate(bias_modes, bias_magnitude, params):
             log.info(f"it {it} coefficients:{[np.round(a, 1) for a in start_aberrations]}")
             # Set up scan
             image_dim = (128, 128)  # set as appropriate
-            scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1], y=image_dim[0]))
+            scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
             pred = np.zeros((max(bias_modes) + 1))
             for bias in bias_modes:
                 # Get lists of biases and aberrations
@@ -127,8 +128,6 @@ def polynomial_estimate(bias_modes, bias_magnitude, params):
                     stack[:, :, i_image] = image
 
                 # format
-                stack = -stack[2:, 2:, :]  # Image is inverted (also clip flyback)
-                stack = stack[:, ::-1, :]  # new correct flip?
                 stack = np.rollaxis(stack, 2, 0)
                 # calculate metric
                 intensities = Intensity_Metric(stack, stack.shape[1] // 2, params.centerrange)
@@ -218,7 +217,7 @@ def ml_estimate(params):
             log.info(f"it {it} coefficients:{[np.round(a, 1) for a in start_aberrations]}")
             # Set up scan
             image_dim = (128, 128)  # set as appropriate
-            scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1], y=image_dim[0]))
+            scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
 
             # Get lists of biases and aberrations
             list_of_aberrations_lists = make_bias_polytope(
@@ -248,8 +247,8 @@ def ml_estimate(params):
                 stack[:, :, i_image] = image
 
             # format for CNN
-            stack = -stack[np.newaxis, 2:, 2:, :]  # Image is inverted (also clip flyback)
-            stack = stack[:, :, ::-1, :]  # new correct flip?
+            stack = stack[np.newaxis, :, :, :]  # Image is inverted (also clip flyback)
+            # stack = stack[:, :, ::-1, :]  # new correct flip?
 
             """rot90 = False  # align rotation of image with network
             # save images

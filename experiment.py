@@ -57,7 +57,7 @@ def Experiment(method, params):
 
     if method in ["quadratic", "q"]:
         if not (params.bias_modes and params.bias_magnitude):
-            if not params.model:
+            if not params.modelno:
                 log.warning(
                     "Possible missing Experiment Parameters: model, or bias_modes and bias_magnitude: falling back to model 0"
                 )

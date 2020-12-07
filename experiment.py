@@ -61,7 +61,8 @@ def Experiment(method, params):
                 log.warning(
                     "Possible missing Experiment Parameters: model, or bias_modes and bias_magnitude: falling back to model 0"
                 )
-            model = ModelWrapper(params.model)
+            model = ModelWrapper(params.modelno)
+
         jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
         graph_exp(jsonfilelist)
 

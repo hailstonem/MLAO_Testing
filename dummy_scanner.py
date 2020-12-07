@@ -50,14 +50,19 @@ class ScannerStub:
         self.y = PixelRange.y
 
         image = np.zeros((self.y, self.x)).astype("uint16")
-        image[60:62, 60] = 200
+        image[62:64, 62] = 200
         image[2, 2] = 200
         image[-2, -2] = 200
         image[2, -2] = 200
         image[-2, 2] = 200
 
         self.fh = Fraunhofer(
-            wavelength=500e-9, NA=self.NA, N=128, pixel_size=self.pixel_size / 1.5, n_alpha=6, image=image,
+            wavelength=500e-9,
+            NA=self.NA,
+            N=PixelRange.x,
+            pixel_size=self.pixel_size / 1.5,
+            n_alpha=6,
+            image=image,
         )
 
     def GetAOCalibrationStack(self, list_of_aberrations_lists, pixel_size, image_dim):

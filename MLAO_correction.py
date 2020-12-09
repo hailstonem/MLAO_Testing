@@ -225,7 +225,7 @@ def ml_estimate(params):
     if not os.path.exists(folder):
         os.mkdir(folder)
     jsonfilelist = []
-    model = ModelWrapper(params.model)
+    model = ModelWrapper(params.modelno)
     bias_magnitude, bias_modes, return_modes = model.bias_magnitude, model.bias_modes, model.return_modes
 
     # calibration should be from applied modes
@@ -440,7 +440,7 @@ class ModelWrapper:
         self.model = None
         self.bias_magnitude = 1
         self.model, self.subtract, self.return_modes = self.load_model(model_no)
-        log.debug("model_loaded")
+        log.info(f"Model {model_no} loaded: return modes: {self.return_modes}")
         self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
 
     def load_model(self, model_no):

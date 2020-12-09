@@ -105,12 +105,12 @@ def run_experiments(experiments):
     t0 = time.time()
     log.info("----EXPERIMENTS START----")
     # calibrate: run quadratic correction for calibrate iterations
-    if experiments.quadratic:
+    if experiments.system:
         params.update(
             scan=0,
-            iter=experiments.quadratic,
+            iter=experiments.system,
             use_bias_only=True,
-            experiment_name=f"_quadratic_M{experiments.model}",
+            experiment_name=f"_system_M{experiments.model}",
         )
         Experiment("quadratic", params)
         log.info(f"----QUADRATIC ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
@@ -180,7 +180,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("-single_abb_mag", help="single_abb Aberration magnitude", type=float, default=3)
     parser.add_argument(
-        "-quadratic", help="Run conventional (quadratic) correction over all modes", type=int, default=0
+        "-system",
+        help="Run correction over all modes for specified iterations with no applied aberration",
+        type=int,
+        default=0,
     )
     parser.add_argument("-scan_bias", help="", type=float, default=0)
     parser.add_argument("-scan_all", help="", type=float, default=0)

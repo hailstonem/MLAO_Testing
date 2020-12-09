@@ -79,14 +79,15 @@ class AberrationHistory:
         self.prediction = []
 
     def update(self, aberration=None, prediction=None):
+        log.debug(f"Aberration: {aberration},Predicted {prediction}")
         if aberration is not None and prediction is not None:
-            self.aberration.append(aberration[:])
-            self.prediction.append(prediction[:])
+            self.aberration.append(aberration.copy())
+            self.prediction.append(prediction.copy())
         elif aberration is not None:
-            self.aberration.append(aberration[:])
+            self.aberration.append(aberration.copy())
             self.prediction.append(self.aberration[-1] - self.aberration[-2])
         elif prediction is not None:
-            self.prediction.append(prediction[:])
+            self.prediction.append(prediction.copy())
             self.aberration.append(self.aberration[-1] - prediction)
 
 

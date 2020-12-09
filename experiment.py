@@ -7,7 +7,7 @@ import sys
 from MLAO_correction import ml_estimate, polynomial_estimate
 
 from pathlib import Path
-from graph_results import graph
+from graph_results import graph, graph_compare
 from MLAO_correction import ModelWrapper
 
 
@@ -55,6 +55,21 @@ def Experiment(method, params):
             print(folder)
             graph(prefix, str(folder), [name])
 
+    def graph_exp_compare(jsonfilelist_ml, jsonfilelist_c):
+        for ml, c in zip(jsonfilelist_ml, jsonfilelist_c):
+            print(ml, c)
+            jsonfile_ml, prefix_ml = ml
+            jsonfile_c, prefix_c = c
+            jsonpath_ml, jsonpath_c = Path(jsonfile_ml), Path(jsonfile_c)
+
+            folder_ml, name_ml = jsonpath_ml.parent, jsonpath_ml.name
+            folder_c, name_c = jsonpath_c.parent, jsonpath_c.name
+            print(folder_ml)
+
+            graph(prefix_ml, str(folder_ml), [name_ml])
+            graph(prefix_c, str(folder_c), [name_c])
+            graph_compare(prefix_ml, str(folder_ml), [name_ml], str(folder_c), [name_c])
+
     if method in ["quadratic", "q"]:
         if not (params.bias_modes and params.bias_magnitude):
             if not params.modelno:
@@ -71,11 +86,14 @@ def Experiment(method, params):
         graph_exp(jsonfilelist)
 
     elif method in ["comparison", "compare", "c"]:
-        jsonfilelist = ml_estimate(params)
-        graph_exp(jsonfilelist)
-        model = ModelWrapper(params.model)
-        jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
-        graph_exp(jsonfilelist)
+        jsonfilelist_ml = ml_estimate(params)
+        # graph_exp(jsonfilelist_ml)
+        model = ModelWrapper(params.modelno)
+        jsonfilelist_c = polynomial_estimate(
+            model.bias_modes, model.return_modes, model.bias_magnitude, params
+        )
+        # graph_exp(jsonfilelist_c)
+        graph_exp_compare(jsonfilelist_ml, jsonfilelist_c)
 
     else:
         log.warning("Experiment Parameters not recognised: make sure 'method' is set correctly")

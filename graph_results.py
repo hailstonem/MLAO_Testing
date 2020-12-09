@@ -225,6 +225,31 @@ def main(prefix, folder):
     graph(prefix, folder, filelist)
 
 
+def graph_compare(prefix, folder_ml, filelist_ml, folder_c, filelist_c):
+
+    plt.figure()
+
+    ml_dict = Iterations_dict(folder_ml, filelist_ml)
+    ml_brightness = [b["Brightness"] for b in ml_dict.values()]
+
+    c_dict = Iterations_dict(folder_c, filelist_c)
+    c_brightness = [b["Brightness"] for b in c_dict.values()]
+
+    # c_brightness = np.zeros((len(c_dict),))
+    # for k, v in c_dict["Brightness"]:
+    #    c_brightness[int(k)] = v
+
+    plt.plot(np.arange(len(ml_brightness)) + 1, ml_brightness)
+    plt.plot(np.arange(len(c_brightness)) + 1, c_brightness)
+    plt.legend(["ML", "Quadratic"])
+    plt.xlabel("Iteration")
+    plt.ylabel("Mean Brightness")
+    # plt.scatter(indexes,estimated)
+    plt.tight_layout()
+    plt.savefig(folder_ml + "//" + prefix + "_brightness_comparison.png")
+    plt.cla()
+
+
 def graph(prefix, folder, filelist):
     # print(filelist)
     plt.figure()

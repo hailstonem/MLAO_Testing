@@ -48,12 +48,12 @@ def optimisation(coeffarray, metric, degree_fitting=2):
 
     new_series_fit = Polynomial.fit(coeffarray, metric, degree_fitting)
 
-    new_coeffarray = np.linspace(coeffarray[0], coeffarray[-1], 101)
+    new_coeffarray = np.linspace(np.max(coeffarray), np.min(coeffarray), 101)
 
     new_series = polyval(new_coeffarray, new_series_fit.convert().coef)
 
     maxcoeff = new_coeffarray[np.argmax(new_series)]
-    # print(maxcoeff)
+    log.debug(metric)
 
     return maxcoeff
 

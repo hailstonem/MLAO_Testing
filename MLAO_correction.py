@@ -124,21 +124,22 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
 
         if mode:
             start_aberrations[mode] += params.magnitude
-        tracked_aberrations = start_aberrations[:]
+        tracked_aberrations = start_aberrations
+        aberration_modes = [int(i) for i in range(len(tracked_aberrations))]
         abb_his = AberrationHistory(start_aberrations)
+
+        # Set up scan
+        image_dim = (128, 128)  # set as appropriate
+        scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
+
         for it in range(iterations + 1):
             log.info(f"it {it} coefficients:{[np.round(a, 1) for a in tracked_aberrations]}")
 
-            # Set up scan
-            image_dim = (128, 128)  # set as appropriate
-            scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
-            pred = np.zeros((max(bias_modes) + 1))
             for bn, bias in enumerate(bias_modes):
                 # Get lists of biases and aberrations
                 list_of_aberrations_lists = make_bias_polytope(
                     tracked_aberrations, [bias], max(bias_modes) + 1, steps=[bias_magnitude]
                 )
-                aberration_modes = [int(i) for i in range(len(tracked_aberrations))]
 
                 # randomize image collection to minimise effects of bleaching
                 shuffled_order = np.arange(len(list_of_aberrations_lists))
@@ -176,7 +177,8 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
                 # use this as starting point for next correction
                 tracked_aberrations[bias] = optimal
             abb_his.update(aberration=tracked_aberrations)
-
+            # log.info(abb_his.aberration[it])
+            # log.info(abb_his.prediction[it][bias_modes])
             # save to json and tif
             coeff_to_json(
                 jsonfile,

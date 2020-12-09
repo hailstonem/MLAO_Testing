@@ -187,6 +187,7 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
                 abb_his.prediction[it][bias_modes],
                 it + 1,
                 brightness=brightness,
+                name="quadratic",
             )
             # if not params.correct_bias_only:
             #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
@@ -204,9 +205,10 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
                     jsonfile,
                     tuple(tracked_aberrations),
                     bias_modes,
-                    np.zeros_like(pred)[bias_modes],
+                    np.zeros_like(tracked_aberrations)[bias_modes],
                     it + 2,
                     brightness=np.mean(image),
+                    name="quadratic",
                 )
         jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
     return jsonfilelist
@@ -332,6 +334,7 @@ def ml_estimate(params):
                 [pred[i] for i in modifiable_mode_indexes],
                 it + 1,
                 brightness=np.mean(stack[0, :, :, 0]),
+                name="ml",
             )
 
             tifname = folder + "/%03d_%s_iterations.tif" % (rnd, mode)
@@ -517,12 +520,13 @@ def append_to_json(filename, new_data):
         json.dump(data, cofile, indent=1)
 
 
-def coeff_to_json(filename, start_aberrations, return_modes, pred, iterations, brightness):
+def coeff_to_json(filename, start_aberrations, return_modes, pred, iterations, brightness, name):
     coeffs = dict()
     coeffs[str(iterations)] = {
         "Applied": dict(zip(return_modes, [float(start_aberrations[p]) for p in return_modes],)),
         "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
         "Brightness": float(brightness),
+        "Type": str(name),
     }
     append_to_json(filename, coeffs)
 

@@ -38,6 +38,7 @@ except ImportError:
 
 
 def Intensity_Metric(imagegen, centerpixel=50, centerrange=15):
+    """Total intensity over centre region of each image"""
     centermin = centerpixel - centerrange
     centermax = centerpixel + centerrange
     intensities = [np.sum(im[centermin:centermax, centermin:centermax]) for im in imagegen]
@@ -45,7 +46,7 @@ def Intensity_Metric(imagegen, centerpixel=50, centerrange=15):
 
 
 def optimisation(coeffarray, metric, degree_fitting=2):
-
+    """Polynomial fit over coeffarray range, returns maximum coefficient"""
     new_series_fit = Polynomial.fit(coeffarray, metric, degree_fitting)
 
     new_coeffarray = np.linspace(np.max(coeffarray), np.min(coeffarray), 101)
@@ -59,6 +60,7 @@ def optimisation(coeffarray, metric, degree_fitting=2):
 
 
 def set_slm_and_capture_image(scanner, image_dim, aberration, aberration_modes, repeats):
+    """Collect and format image after applying aberration"""
     image = np.zeros(image_dim)
     for _ in range(repeats):
         log.debug([np.round(a, 1) for a in aberration])
@@ -179,9 +181,7 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
                 # use this as starting point for next correction
                 tracked_aberrations[bias] = optimal
             abb_his.update(aberration=tracked_aberrations)
-            # log.info(abb_his.aberration[it])
-            # log.info(abb_his.prediction[it][bias_modes])
-            # save to json and tif
+
             coeff_to_json(
                 jsonfile,
                 abb_his.aberration[it],
@@ -191,9 +191,6 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
                 brightness=brightness,
                 name="quadratic",
             )
-            # if not params.correct_bias_only:
-            #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
-            # else:
 
             if it == params.iter:
 

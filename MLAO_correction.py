@@ -74,18 +74,20 @@ def set_slm_and_capture_image(scanner, image_dim, aberration, aberration_modes, 
 
 
 class AberrationHistory:
+    """Store current and previous aberrations as lists: note aberration list is longer than prediction list"""
+
     def __init__(self, initial_aberration):
         self.aberration = [np.array(initial_aberration)]
         self.prediction = []
 
     def update(self, aberration=None, prediction=None):
-        log.debug(f"Aberration: {aberration},Predicted {prediction}")
+        log.debug(f"Aberration: {aberration}, Predicted {prediction}")
         if aberration is not None and prediction is not None:
             self.aberration.append(aberration.copy())
             self.prediction.append(prediction.copy())
         elif aberration is not None:
             self.aberration.append(aberration.copy())
-            self.prediction.append(self.aberration[-1] - self.aberration[-2])
+            self.prediction.append(self.aberration[-2] - self.aberration[-1])
         elif prediction is not None:
             self.prediction.append(prediction.copy())
             self.aberration.append(self.aberration[-1] - prediction)
@@ -192,7 +194,8 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
             # if not params.correct_bias_only:
             #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
             # else:
-            if it == iterations:
+
+            if it == params.iter:
 
                 list_of_aberrations_lists = make_bias_polytope(
                     tracked_aberrations, bias_modes, max(bias_modes) + 1, steps=[]
@@ -215,8 +218,6 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
 
 
 def ml_estimate(params):
-
-    iterations, scan = params.iter, params.scan
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 
     params should specify correct_bias_only load_abb and save_abb"""
 
@@ -234,12 +235,12 @@ def ml_estimate(params):
     channel = grpc.insecure_channel("localhost:50051")
     scanner = ScannerStub(channel)
 
-    if scan == -1:
+    if params.scan == -1:
         scan_modes = return_modes
-    elif scan == -2:
+    elif params.scan == -2:
         scan_modes = bias_modes
     else:
-        scan_modes = [scan]
+        scan_modes = [params.scan]
     log.debug(f"scan modes: {scan_modes}")
 
     if len(params.disable_mode) > 0:
@@ -271,7 +272,7 @@ def ml_estimate(params):
         acc_pred = np.zeros(len(return_modes))
         old_brightness = 0
 
-        for it in range(iterations + 1):
+        for it in range(params.iter + 1):
             log.info(f"it {it} coefficients:{[np.round(a, 1) for a in start_aberrations]}")
             # Set up scan
             image_dim = (128, 128)  # set as appropriate
@@ -323,7 +324,7 @@ def ml_estimate(params):
 
             # save to json and tif
             jsonfile = f"{folder}/{rnd:03d}_{mode}_coefficients.json"
-            jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
+
             # if not params.correct_bias_only:
             #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
             # else:
@@ -349,7 +350,7 @@ def ml_estimate(params):
             )
 
             # collect corrected image
-            if it == iterations:
+            if it == params.iter:
 
                 list_of_aberrations_lists = make_bias_polytope(
                     start_aberrations, bias_modes, max(return_modes) + 1, steps=[]
@@ -357,8 +358,17 @@ def ml_estimate(params):
                 image = set_slm_and_capture_image(
                     scanner, image_dim, list_of_aberrations_lists[0], aberration_modes, 1
                 )
-                save_tif(tifname, image[2:, 2::-1].astype("float32") / -1)
-
+                save_tif(tifname, image.astype("float32"))
+                coeff_to_json(
+                    jsonfile,
+                    tuple(start_aberrations),
+                    modifiable_modes,
+                    [np.zeros_like(pred)[i] for i in modifiable_mode_indexes],
+                    it + 1,
+                    brightness=np.mean(image),
+                    name="ml",
+                )
+                jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
             brightness = np.sum(image)
             old_brightness = brightness.copy()
             if brightness < old_brightness:
@@ -504,9 +514,23 @@ class ModelWrapper:
             )
         if len(pred) != len(self.return_modes):
             log.warning(
-                f"Mismatch in returned modes: predicted:{len(pred)}, expected: {len(self.return_modes)}"
+                f"Warning: Mismatch in returned modes: predicted:{len(pred)}, expected: {len(self.return_modes)}"
             )
         return pred
+
+    def single_shot_quadratic(self, image, num_bias, bias_mag):
+        """Returns quadratic fit estimate in same format as 2n+1 MLAO"""
+        estimate = np.zeros(num_bias)
+        for b in range(num_bias):
+            b_indices = [0, 2 * b + 1, 2 * b + 2]
+            coeffarray = [0, bias_mag, -bias_mag]
+            intensities = [
+                np.mean(image[0, :, :, b_indices[0]]),
+                np.mean(image[0, :, :, b_indices[1]]),
+                np.mean(image[0, :, :, b_indices[2]]),
+            ]
+            estimate[b] = optimisation(coeffarray, intensities)
+        return -estimate
 
 
 def append_to_json(filename, new_data):

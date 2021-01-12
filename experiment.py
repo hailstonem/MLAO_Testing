@@ -81,7 +81,7 @@ def Experiment(method, params):
         jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
         graph_exp(jsonfilelist)
 
-    elif method in ["mlao", "m"]:
+    elif method in ["mlao", "m", "ml"]:
         jsonfilelist = ml_estimate(params)
         graph_exp(jsonfilelist)
 

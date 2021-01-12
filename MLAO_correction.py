@@ -97,7 +97,6 @@ class AberrationHistory:
 
 def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
     """Performs correction based on 3n polynomial fitting. Same API as ml_estimate, but also requires bias_modes parameter"""
-    iterations = params.iter
 
     rnd = time_prefix("./results")
     folder = params.path + "/" + time.strftime("%y%m%" + "d") + params.experiment_name
@@ -136,7 +135,7 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
         image_dim = (128, 128)  # set as appropriate
         scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
 
-        for it in range(iterations + 1):
+        for it in range(params.iter + 1):
             log.info(f"it {it} coefficients:{[np.round(a, 1) for a in tracked_aberrations]}")
 
             for bn, bias in enumerate(bias_modes):

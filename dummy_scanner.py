@@ -3,8 +3,8 @@ from collections import namedtuple
 import numpy as np
 
 sys.path.append("..\\ML-Zernicke-estimation\\")
-from fourier import Fraunhofer
-from imagegen import make_betas_polytope
+from imagegen.fourier import Fraunhofer
+from imagegen.imagegen import make_betas_polytope
 
 
 class Empty:

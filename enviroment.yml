@@ -1,0 +1,11 @@
+name: mlao
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - tensorflow==1.15
+  - scipy
+  - numpy
+  - matplotlib
+  - grpc-cpp
+  - tifffile

@@ -584,7 +584,7 @@ def make_bias_polytope(start_aberrations, offset_axes, nk, steps=(1)):
     """
     # beta (diffraction-limited), N_beta = cpsf.czern.nk
     beta = np.zeros(nk, dtype=np.float32)
-    beta[:] = start_aberrations[:]
+    beta[:] = start_aberrations
     beta[0] = 0.01
     # add offsets to beta
 

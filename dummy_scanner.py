@@ -3,8 +3,14 @@ from collections import namedtuple
 import numpy as np
 
 sys.path.append("..\\ML-Zernicke-estimation\\")
-from fourier import Fraunhofer
-from imagegen import make_betas_polytope
+try:
+    from imagegen.fourier import Fraunhofer
+    from imagegen.imagegen import make_betas_polytope
+
+    IMAGEGEN = True
+except ImportError:
+    IMAGEGEN = False
+    raise RuntimeWarning("Dummy mode: Cannot find imagegen, defaulting to np.random")
 
 
 class Empty:
@@ -69,9 +75,11 @@ class ScannerStub:
         return np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
 
     def StartScan(self, e):
-
-        psf = self.fh.psf(self.aberrations)
-        self.scan = self.fh.incoherent(psf, True)
+        if IMAGEGEN:
+            psf = self.fh.psf(self.aberrations)
+            self.scan = self.fh.incoherent(psf, True)
+        else:
+            image = np.random.uniform(high=10000, size=(self.y, self.x)).astype("uint16")
 
         T = namedtuple("T", ["id"])(np.random.randint(1000))
         return T

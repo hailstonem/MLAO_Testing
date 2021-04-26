@@ -16,6 +16,9 @@ import tensorflow as tf
 
 tf.get_logger().setLevel("ERROR")
 log = getLogger("mlao_log")
+
+import DM_Interface
+
 try:
     from doptical.api.scanner_pb2_grpc import ScannerStub
     from doptical.api.scanner_pb2 import (
@@ -37,22 +40,22 @@ except ImportError:
 
 from metricsandalgs import Intensity_Metric, optimisation, make_bias_polytope
 
+# Scanner URI for MCAO microscope
+SCANNER_URI = "10.200.20.36:50051"
 
 
-
-def set_slm_and_capture_image(scanner, image_dim, aberration, aberration_modes, repeats):
+def set_dm_and_capture_image(scanner, dm_interface, image_dim, aberration, aberration_modes, repeats):
     """Collect and format image after applying aberration"""
     image = np.zeros(image_dim)
     for _ in range(repeats):
         log.debug([np.round(a, 1) for a in aberration])
 
-        ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
-        scanner.SetSLMZernikeModes(ZM)
+        dm_interface.write(aberration)
 
         time.sleep(1.5)
-        image += capture_image(scanner)[2:, 2:]
-    image = -image  # Image is inverted (also clip flyback)
-    image = image[:, ::-1]  # new correct flip?
+        image += capture_image(scanner)  # [2:, 2:]
+    # image = -image  # Image is inverted (also clip flyback)
+    # image = image[:, ::-1]  # new correct flip?
     return image
 
 
@@ -85,8 +88,10 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
     if not os.path.exists(folder):
         os.mkdir(folder)
 
-    channel = grpc.insecure_channel("localhost:50051")
+    channel = grpc.insecure_channel(SCANNER_URI)
     scanner = ScannerStub(channel)
+    params.sim = params.dummy
+    dm_interface = DM_interface(params)
 
     if params.scan == -1:
         scan_modes = return_modes
@@ -135,8 +140,8 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
                 for i_image in shuffled_order:
                     aberration = list_of_aberrations_lists[i_image]
 
-                    image = set_slm_and_capture_image(
-                        scanner, image_dim, aberration, aberration_modes, params.repeats
+                    image = set_dm_and_capture_image(
+                        scanner, dm_interface, image_dim, aberration, aberration_modes, params.repeats
                     )
 
                     temptifname = folder + "/%03d_%s_%s_temp_.tif" % (rnd, mode, it)
@@ -177,8 +182,8 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
                 list_of_aberrations_lists = make_bias_polytope(
                     tracked_aberrations, bias_modes, max(bias_modes) + 1, steps=[]
                 )
-                image = set_slm_and_capture_image(
-                    scanner, image_dim, list_of_aberrations_lists[0], aberration_modes, 1
+                image = set_dm_and_capture_image(
+                    scanner, dm_interface, image_dim, list_of_aberrations_lists[0], aberration_modes, 1
                 )
                 save_tif(tifname, image.astype("float32"))
                 coeff_to_json(

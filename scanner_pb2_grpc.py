@@ -17,7 +17,7 @@ class ScannerStub(object):
         self.StartScan = channel.unary_unary(
                 '/scanner.Scanner/StartScan',
                 request_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
-                response_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+                response_deserializer=doptical_dot_api_dot_scanner__pb2.ScannerResponse.FromString,
                 )
         self.StartLive = channel.unary_unary(
                 '/scanner.Scanner/StartLive',
@@ -29,10 +29,15 @@ class ScannerStub(object):
                 request_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
                 response_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
                 )
+        self.ClearScanImages = channel.unary_unary(
+                '/scanner.Scanner/ClearScanImages',
+                request_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+                response_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+                )
         self.Capture = channel.unary_unary(
                 '/scanner.Scanner/Capture',
-                request_serializer=doptical_dot_api_dot_scanner__pb2.Filename.SerializeToString,
-                response_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+                request_serializer=doptical_dot_api_dot_scanner__pb2.Timeout.SerializeToString,
+                response_deserializer=doptical_dot_api_dot_scanner__pb2.Images.FromString,
                 )
         self.SetScanRange = channel.unary_unary(
                 '/scanner.Scanner/SetScanRange',
@@ -49,9 +54,14 @@ class ScannerStub(object):
                 request_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
                 response_deserializer=doptical_dot_api_dot_scanner__pb2.ScannerRange.FromString,
                 )
+        self.GetScanPixelRange = channel.unary_unary(
+                '/scanner.Scanner/GetScanPixelRange',
+                request_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+                response_deserializer=doptical_dot_api_dot_scanner__pb2.ScannerPixelRange.FromString,
+                )
         self.GetScanImages = channel.unary_unary(
                 '/scanner.Scanner/GetScanImages',
-                request_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+                request_serializer=doptical_dot_api_dot_scanner__pb2.ImageStackID.SerializeToString,
                 response_deserializer=doptical_dot_api_dot_scanner__pb2.Images.FromString,
                 )
         self.GetScanImagesLength = channel.unary_unary(
@@ -97,6 +107,12 @@ class ScannerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ClearScanImages(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def Capture(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -116,6 +132,12 @@ class ScannerServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetScanRange(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetScanPixelRange(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -157,7 +179,7 @@ def add_ScannerServicer_to_server(servicer, server):
             'StartScan': grpc.unary_unary_rpc_method_handler(
                     servicer.StartScan,
                     request_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
-                    response_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+                    response_serializer=doptical_dot_api_dot_scanner__pb2.ScannerResponse.SerializeToString,
             ),
             'StartLive': grpc.unary_unary_rpc_method_handler(
                     servicer.StartLive,
@@ -169,10 +191,15 @@ def add_ScannerServicer_to_server(servicer, server):
                     request_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
                     response_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
             ),
+            'ClearScanImages': grpc.unary_unary_rpc_method_handler(
+                    servicer.ClearScanImages,
+                    request_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+                    response_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+            ),
             'Capture': grpc.unary_unary_rpc_method_handler(
                     servicer.Capture,
-                    request_deserializer=doptical_dot_api_dot_scanner__pb2.Filename.FromString,
-                    response_serializer=doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+                    request_deserializer=doptical_dot_api_dot_scanner__pb2.Timeout.FromString,
+                    response_serializer=doptical_dot_api_dot_scanner__pb2.Images.SerializeToString,
             ),
             'SetScanRange': grpc.unary_unary_rpc_method_handler(
                     servicer.SetScanRange,
@@ -189,9 +216,14 @@ def add_ScannerServicer_to_server(servicer, server):
                     request_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
                     response_serializer=doptical_dot_api_dot_scanner__pb2.ScannerRange.SerializeToString,
             ),
+            'GetScanPixelRange': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetScanPixelRange,
+                    request_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+                    response_serializer=doptical_dot_api_dot_scanner__pb2.ScannerPixelRange.SerializeToString,
+            ),
             'GetScanImages': grpc.unary_unary_rpc_method_handler(
                     servicer.GetScanImages,
-                    request_deserializer=doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+                    request_deserializer=doptical_dot_api_dot_scanner__pb2.ImageStackID.FromString,
                     response_serializer=doptical_dot_api_dot_scanner__pb2.Images.SerializeToString,
             ),
             'GetScanImagesLength': grpc.unary_unary_rpc_method_handler(
@@ -237,7 +269,7 @@ class Scanner(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/StartScan',
             doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
-            doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+            doptical_dot_api_dot_scanner__pb2.ScannerResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -276,6 +308,23 @@ class Scanner(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def ClearScanImages(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/ClearScanImages',
+            doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+            doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def Capture(request,
             target,
             options=(),
@@ -287,8 +336,8 @@ class Scanner(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/Capture',
-            doptical_dot_api_dot_scanner__pb2.Filename.SerializeToString,
-            doptical_dot_api_dot_scanner__pb2.Empty.FromString,
+            doptical_dot_api_dot_scanner__pb2.Timeout.SerializeToString,
+            doptical_dot_api_dot_scanner__pb2.Images.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -344,6 +393,23 @@ class Scanner(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def GetScanPixelRange(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/GetScanPixelRange',
+            doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+            doptical_dot_api_dot_scanner__pb2.ScannerPixelRange.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def GetScanImages(request,
             target,
             options=(),
@@ -355,7 +421,7 @@ class Scanner(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/GetScanImages',
-            doptical_dot_api_dot_scanner__pb2.Empty.SerializeToString,
+            doptical_dot_api_dot_scanner__pb2.ImageStackID.SerializeToString,
             doptical_dot_api_dot_scanner__pb2.Images.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

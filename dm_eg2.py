@@ -25,10 +25,7 @@ from dmlib.control import ZernikeControl
 import dmlib.zpanel as zpanel
 
 
-from gui import Main
-
-
-class DM_Interface:
+class DmInterface:
     """Wrapper around dmlib"""
 
     def __init__(self, args):
@@ -50,9 +47,10 @@ class DM_Interface:
         else:
             args.dm_name = None
             args.dm_driver = "bmc"
-
+        args.dm_parameters = None
+        args.dm_calibration = None
         # Show DM GUI
-        app = QApplication(sys.argv)
+        app = QApplication([])
         dm_pars = {"calibration": "./data/calib.h5"}
         self.dmwin = zpanel.new_zernike_window(app, args, dm_pars)
         self.dmwin.show()
@@ -71,3 +69,9 @@ class DM_Interface:
         self.dmwin.zpanel.update_gui_controls()
         self.dmwin.zpanel.update_phi_plot()
 
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sim", help="runs in dummy mode", action="store_true")
+    args = parser.parse_args()
+    DmInterface(args)

@@ -95,8 +95,9 @@ class AberrationHistory:
             self.aberration.append(self.aberration[-1] - prediction)
 
 
+"""
 def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
-    """Performs correction based on 3n polynomial fitting. Same API as ml_estimate, but also requires bias_modes parameter"""
+    '''Performs correction based on 3n polynomial fitting. Same API as ml_estimate, but also requires bias_modes parameter'''
 
     rnd = time_prefix("./results")
     folder = params.path + "/" + time.strftime("%y%m%" + "d") + params.experiment_name
@@ -211,6 +212,7 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
                 )
         jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
     return jsonfilelist
+"""
 
 
 def ml_estimate(params):
@@ -311,7 +313,7 @@ def ml_estimate(params):
                 folder + "/%03d_%s_full_stack.tif" % (rnd, mode), np.rollaxis(stack.astype("float32"), 3, 1)
             )"""
 
-            pred = [x / params.factor for x in model.predict(stack, split=False)]
+            pred = [x / params.factor for x in model.predict(stack, params.quadratic, split=False)]
             if params.use_calibration:
                 pred = pred + 0.9 * calibration
 
@@ -480,7 +482,7 @@ class ModelWrapper:
             self.bias_magnitude = 1
         return model, subtract, self.return_modes
 
-    def predict(self, stack, rot90=False, split=False):
+    def predict(self, stack, quadratic=False, rot90=False, split=False):
         def rotate(stack, rot90):
             return np.rot90(stack, k=rot90, axes=[1, 2])
 
@@ -489,6 +491,9 @@ class ModelWrapper:
         stack = (stack.astype("float") - stack.mean()) / max(
             stack.astype("float").std(), 10e-20
         )  # prevent div/0
+
+        if quadratic:
+            return self.single_shot_quadratic(stack, len(self.bias_modes), self.bias_magnitude)
 
         if self.subtract:
             stack = stack[:, :, :, 1:] - stack[:, :, :, 0:1]

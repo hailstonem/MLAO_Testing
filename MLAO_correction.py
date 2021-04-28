@@ -219,8 +219,8 @@ def ml_estimate(params):
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 
     params should specify correct_bias_only load_abb and save_abb"""
 
-    rnd = time_prefix("./results")
-    folder = "./results/" + time.strftime("%y%m%" + "d") + params.experiment_name
+    rnd = time_prefix()
+    folder = f"{params.outputpath}/" + time.strftime("%y%m%" + "d") + params.experiment_name
     if not os.path.exists(folder):
         os.mkdir(folder)
     jsonfilelist = []
@@ -567,7 +567,7 @@ def non_colliding_prefix(path):
     return np.random.choice(list(indexes - used_index))
 
 
-def time_prefix(path):
+def time_prefix():
 
     # index = np.random.randint(0, 10)
     prefix = int(time.strftime("%H%M%S"))

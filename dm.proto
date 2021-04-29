@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package scanner;
+
+service DM {
+    rpc SetDMZernikeModes (ZernikeModes) returns (Empty) {};
+    rpc Quit (Empty) returns (Empty) {};
+}
+
+message Empty {
+}
+
+message ZernikeModes {
+    repeated int32 modes = 1;
+    repeated float amplitudes = 2;
+}
+
+message Timeout {
+    float timeout = 1;
+}

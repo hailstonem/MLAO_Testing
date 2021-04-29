@@ -215,6 +215,16 @@ def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
 
 
 def collect_dataset(bias_modes, applied_modes, applied_steps, bias_mag, params):
+def scanner_setup():
+    channel = grpc.insecure_channel("localhost:50051")
+    scanner = ScannerStub(channel)
+
+    image_dim = (128, 128)  # set as appropriate
+    scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
+    return image_dim, scanner
+
+
+def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, params):
     """"""
 
     def generateAbb(bias_modes, applied_modes, applied_steps, bias_mag, start_aberrations=None):
@@ -288,8 +298,8 @@ def ml_estimate(params):
     # calibration should be from applied modes
     calibration = get_calibration([7])
     log.debug(calibration)
-    channel = grpc.insecure_channel("localhost:50051")
-    scanner = ScannerStub(channel)
+
+    image_dim, scanner = scanner_setup()
 
     if params.scan == -1:
         scan_modes = return_modes
@@ -330,9 +340,6 @@ def ml_estimate(params):
 
         for it in range(params.iter + 1):
             log.info(f"it {it} coefficients:{[np.round(a, 1) for a in start_aberrations]}")
-            # Set up scan
-            image_dim = (128, 128)  # set as appropriate
-            scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
 
             # Get lists of biases and aberrations
             list_of_aberrations_lists = make_bias_polytope(

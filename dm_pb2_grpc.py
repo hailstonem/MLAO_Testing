@@ -97,3 +97,493 @@ class DM(object):
             dm__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class ScannerStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.StartScan = channel.unary_unary(
+                '/scanner.Scanner/StartScan',
+                request_serializer=dm__pb2.Empty.SerializeToString,
+                response_deserializer=dm__pb2.ScannerResponse.FromString,
+                )
+        self.StartLive = channel.unary_unary(
+                '/scanner.Scanner/StartLive',
+                request_serializer=dm__pb2.Empty.SerializeToString,
+                response_deserializer=dm__pb2.Empty.FromString,
+                )
+        self.StopScan = channel.unary_unary(
+                '/scanner.Scanner/StopScan',
+                request_serializer=dm__pb2.Empty.SerializeToString,
+                response_deserializer=dm__pb2.Empty.FromString,
+                )
+        self.ClearScanImages = channel.unary_unary(
+                '/scanner.Scanner/ClearScanImages',
+                request_serializer=dm__pb2.Empty.SerializeToString,
+                response_deserializer=dm__pb2.Empty.FromString,
+                )
+        self.Capture = channel.unary_unary(
+                '/scanner.Scanner/Capture',
+                request_serializer=dm__pb2.Timeout.SerializeToString,
+                response_deserializer=dm__pb2.Images.FromString,
+                )
+        self.SetScanRange = channel.unary_unary(
+                '/scanner.Scanner/SetScanRange',
+                request_serializer=dm__pb2.ScannerRange.SerializeToString,
+                response_deserializer=dm__pb2.Empty.FromString,
+                )
+        self.SetScanPixelRange = channel.unary_unary(
+                '/scanner.Scanner/SetScanPixelRange',
+                request_serializer=dm__pb2.ScannerPixelRange.SerializeToString,
+                response_deserializer=dm__pb2.Empty.FromString,
+                )
+        self.GetScanRange = channel.unary_unary(
+                '/scanner.Scanner/GetScanRange',
+                request_serializer=dm__pb2.Empty.SerializeToString,
+                response_deserializer=dm__pb2.ScannerRange.FromString,
+                )
+        self.GetScanPixelRange = channel.unary_unary(
+                '/scanner.Scanner/GetScanPixelRange',
+                request_serializer=dm__pb2.Empty.SerializeToString,
+                response_deserializer=dm__pb2.ScannerPixelRange.FromString,
+                )
+        self.GetScanImages = channel.unary_unary(
+                '/scanner.Scanner/GetScanImages',
+                request_serializer=dm__pb2.ImageStackID.SerializeToString,
+                response_deserializer=dm__pb2.Images.FromString,
+                )
+        self.GetScanImagesLength = channel.unary_unary(
+                '/scanner.Scanner/GetScanImagesLength',
+                request_serializer=dm__pb2.Empty.SerializeToString,
+                response_deserializer=dm__pb2.ImagesLength.FromString,
+                )
+        self.GetScanImageBytes = channel.unary_unary(
+                '/scanner.Scanner/GetScanImageBytes',
+                request_serializer=dm__pb2.Empty.SerializeToString,
+                response_deserializer=dm__pb2.Array.FromString,
+                )
+        self.SetPiezoPos = channel.unary_unary(
+                '/scanner.Scanner/SetPiezoPos',
+                request_serializer=dm__pb2.PiezoPos.SerializeToString,
+                response_deserializer=dm__pb2.Empty.FromString,
+                )
+        self.SetSLMZernikeModes = channel.unary_unary(
+                '/scanner.Scanner/SetSLMZernikeModes',
+                request_serializer=dm__pb2.ZernikeModes.SerializeToString,
+                response_deserializer=dm__pb2.Empty.FromString,
+                )
+
+
+class ScannerServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def StartScan(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def StartLive(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def StopScan(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ClearScanImages(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Capture(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetScanRange(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetScanPixelRange(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetScanRange(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetScanPixelRange(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetScanImages(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetScanImagesLength(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetScanImageBytes(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetPiezoPos(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetSLMZernikeModes(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_ScannerServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'StartScan': grpc.unary_unary_rpc_method_handler(
+                    servicer.StartScan,
+                    request_deserializer=dm__pb2.Empty.FromString,
+                    response_serializer=dm__pb2.ScannerResponse.SerializeToString,
+            ),
+            'StartLive': grpc.unary_unary_rpc_method_handler(
+                    servicer.StartLive,
+                    request_deserializer=dm__pb2.Empty.FromString,
+                    response_serializer=dm__pb2.Empty.SerializeToString,
+            ),
+            'StopScan': grpc.unary_unary_rpc_method_handler(
+                    servicer.StopScan,
+                    request_deserializer=dm__pb2.Empty.FromString,
+                    response_serializer=dm__pb2.Empty.SerializeToString,
+            ),
+            'ClearScanImages': grpc.unary_unary_rpc_method_handler(
+                    servicer.ClearScanImages,
+                    request_deserializer=dm__pb2.Empty.FromString,
+                    response_serializer=dm__pb2.Empty.SerializeToString,
+            ),
+            'Capture': grpc.unary_unary_rpc_method_handler(
+                    servicer.Capture,
+                    request_deserializer=dm__pb2.Timeout.FromString,
+                    response_serializer=dm__pb2.Images.SerializeToString,
+            ),
+            'SetScanRange': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetScanRange,
+                    request_deserializer=dm__pb2.ScannerRange.FromString,
+                    response_serializer=dm__pb2.Empty.SerializeToString,
+            ),
+            'SetScanPixelRange': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetScanPixelRange,
+                    request_deserializer=dm__pb2.ScannerPixelRange.FromString,
+                    response_serializer=dm__pb2.Empty.SerializeToString,
+            ),
+            'GetScanRange': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetScanRange,
+                    request_deserializer=dm__pb2.Empty.FromString,
+                    response_serializer=dm__pb2.ScannerRange.SerializeToString,
+            ),
+            'GetScanPixelRange': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetScanPixelRange,
+                    request_deserializer=dm__pb2.Empty.FromString,
+                    response_serializer=dm__pb2.ScannerPixelRange.SerializeToString,
+            ),
+            'GetScanImages': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetScanImages,
+                    request_deserializer=dm__pb2.ImageStackID.FromString,
+                    response_serializer=dm__pb2.Images.SerializeToString,
+            ),
+            'GetScanImagesLength': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetScanImagesLength,
+                    request_deserializer=dm__pb2.Empty.FromString,
+                    response_serializer=dm__pb2.ImagesLength.SerializeToString,
+            ),
+            'GetScanImageBytes': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetScanImageBytes,
+                    request_deserializer=dm__pb2.Empty.FromString,
+                    response_serializer=dm__pb2.Array.SerializeToString,
+            ),
+            'SetPiezoPos': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetPiezoPos,
+                    request_deserializer=dm__pb2.PiezoPos.FromString,
+                    response_serializer=dm__pb2.Empty.SerializeToString,
+            ),
+            'SetSLMZernikeModes': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetSLMZernikeModes,
+                    request_deserializer=dm__pb2.ZernikeModes.FromString,
+                    response_serializer=dm__pb2.Empty.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'scanner.Scanner', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class Scanner(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def StartScan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/StartScan',
+            dm__pb2.Empty.SerializeToString,
+            dm__pb2.ScannerResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def StartLive(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/StartLive',
+            dm__pb2.Empty.SerializeToString,
+            dm__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def StopScan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/StopScan',
+            dm__pb2.Empty.SerializeToString,
+            dm__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ClearScanImages(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/ClearScanImages',
+            dm__pb2.Empty.SerializeToString,
+            dm__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Capture(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/Capture',
+            dm__pb2.Timeout.SerializeToString,
+            dm__pb2.Images.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetScanRange(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/SetScanRange',
+            dm__pb2.ScannerRange.SerializeToString,
+            dm__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetScanPixelRange(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/SetScanPixelRange',
+            dm__pb2.ScannerPixelRange.SerializeToString,
+            dm__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetScanRange(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/GetScanRange',
+            dm__pb2.Empty.SerializeToString,
+            dm__pb2.ScannerRange.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetScanPixelRange(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/GetScanPixelRange',
+            dm__pb2.Empty.SerializeToString,
+            dm__pb2.ScannerPixelRange.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetScanImages(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/GetScanImages',
+            dm__pb2.ImageStackID.SerializeToString,
+            dm__pb2.Images.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetScanImagesLength(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/GetScanImagesLength',
+            dm__pb2.Empty.SerializeToString,
+            dm__pb2.ImagesLength.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetScanImageBytes(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/GetScanImageBytes',
+            dm__pb2.Empty.SerializeToString,
+            dm__pb2.Array.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetPiezoPos(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/SetPiezoPos',
+            dm__pb2.PiezoPos.SerializeToString,
+            dm__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetSLMZernikeModes(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/scanner.Scanner/SetSLMZernikeModes',
+            dm__pb2.ZernikeModes.SerializeToString,
+            dm__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

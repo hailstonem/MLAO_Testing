@@ -284,7 +284,7 @@ def ml_estimate(params, quadratic=False):
     params should specify correct_bias_only load_abb and save_abb"""
 
     rnd = time_prefix()
-    folder = f"{params.outputpath}/" + time.strftime("%y%m%" + "d") + params.experiment_name
+    folder = f"{params.path}/" + time.strftime("%y%m%" + "d") + params.experiment_name
     if not os.path.exists(folder):
         os.mkdir(folder)
     jsonfilelist = []

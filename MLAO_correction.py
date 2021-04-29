@@ -586,16 +586,24 @@ class ModelWrapper:
 
     def single_shot_quadratic(self, image, num_bias, bias_mag):
         """Returns quadratic fit estimate in same format as 2n+1 MLAO"""
+
         estimate = np.zeros(num_bias)
         for b in range(num_bias):
             b_indices = [0, 2 * b + 1, 2 * b + 2]
-            coeffarray = [0, bias_mag, -bias_mag]
+
+            if isinstance(bias_mag, list) and len(bias_mag) == 1:
+                coeffarray = [0, bias_mag[0], -bias_mag[0]]
+            elif isinstance(bias_mag, list) and len(bias_mag) > 1:
+                raise NotImplementedError("fitting for multiple bias aberrations not implemented")
+            else:
+                coeffarray = [0, bias_mag, -bias_mag]
             intensities = [
                 np.mean(image[0, :, :, b_indices[0]]),
                 np.mean(image[0, :, :, b_indices[1]]),
                 np.mean(image[0, :, :, b_indices[2]]),
             ]
             estimate[b] = optimisation(coeffarray, intensities)
+        log.debug(f"SSQ{estimate}")
         return -estimate
 
 

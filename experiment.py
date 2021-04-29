@@ -254,6 +254,9 @@ if __name__ == "__main__":
     # handler.setLevel(logging.DEBUG)
     log.addHandler(handler)
 
+    if not os.path.exists(args.output_path):
+        os.mkdir(args.output_path)
+
     if args.log == "info":
         log.setLevel(20)
     elif args.log == "debug":

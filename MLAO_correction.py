@@ -9,7 +9,6 @@ from numpy.polynomial.polynomial import Polynomial, polyval
 import tifffile
 from calibration import get_calibration
 import grpc
-from PySide2.QtWidgets import QApplication
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"

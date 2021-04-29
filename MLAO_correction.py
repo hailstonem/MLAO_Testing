@@ -279,7 +279,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         )
 
 
-def ml_estimate(params):
+def ml_estimate(params, quadratic=False):
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 
     params should specify correct_bias_only load_abb and save_abb"""
 
@@ -288,7 +288,7 @@ def ml_estimate(params):
     if not os.path.exists(folder):
         os.mkdir(folder)
     jsonfilelist = []
-    model = ModelWrapper(params.modelno)
+    model = ModelWrapper(params.modelno, quadratic)
     bias_magnitude, bias_modes, return_modes = model.bias_magnitude, model.bias_modes, model.return_modes
 
     # calibration should be from applied modes
@@ -357,7 +357,7 @@ def ml_estimate(params):
                     scanner, image_dim, aberration, aberration_modes, params.repeats
                 )
 
-                temptifname = folder + "/%03d_%s_%s_temp_.tif" % (rnd, mode, it)
+                temptifname = folder + "/%03d_%s_%s_temp_%s.tif" % (rnd, mode, it, "MQ"[quadratic])
                 save_tif(temptifname, image)
 
                 if image is None:
@@ -374,7 +374,7 @@ def ml_estimate(params):
                 folder + "/%03d_%s_full_stack.tif" % (rnd, mode), np.rollaxis(stack.astype("float32"), 3, 1)
             )"""
 
-            pred = [x / params.factor for x in model.predict(stack, params.quadratic, split=False)]
+            pred = [x / params.factor for x in model.predict(stack, quadratic, split=False)]
             if params.use_calibration:
                 pred = pred + 0.9 * calibration
 
@@ -382,7 +382,7 @@ def ml_estimate(params):
                 log.info(f"Mode {mode} Applied; Estimate = {str(pred[return_modes.index(mode)])}")
 
             # save to json and tif
-            jsonfile = f"{folder}/{rnd:03d}_{mode}_coefficients.json"
+            jsonfile = f"{folder}/{rnd:03d}_{mode}_{'MQ'[quadratic]}_coefficients.json"
 
             # if not params.correct_bias_only:
             #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
@@ -397,7 +397,7 @@ def ml_estimate(params):
                 name="ml",
             )
 
-            tifname = folder + "/%03d_%s_iterations.tif" % (rnd, mode)
+            tifname = folder + "/%03d_%s_%s_iterations.tif" % (rnd, mode, "MQ"[quadratic])
             save_tif(tifname, stack[0, :, :, 0].astype("float32"))  # /stack[0, :, :, 0].max())
 
             acc_pred += pred
@@ -505,12 +505,16 @@ def capture_image(scanner, timeout=5000, retry_delay=10):
 class ModelWrapper:
     """Stores model specific parameters and applied preprocessing before prediction"""
 
-    def __init__(self, model_no=1):
+    def __init__(self, model_no=1, quadratic=False):
         self.model = None
         self.bias_magnitude = 1
         self.model, self.subtract, self.return_modes = self.load_model(model_no)
         log.info(f"Model {model_no} loaded: return modes: {self.return_modes}")
         self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
+        # override normal ml prediction and use equivalent conventional 2n+1 correction
+        self.quadratic = quadratic
+        if quadratic:
+            self.return_modes = self.bias_modes
 
     def load_model(self, model_no):
         log.debug("loading model")
@@ -543,7 +547,7 @@ class ModelWrapper:
             self.bias_magnitude = 1
         return model, subtract, self.return_modes
 
-    def predict(self, stack, quadratic=False, rot90=False, split=False):
+    def predict(self, stack, rot90=False, split=False):
         def rotate(stack, rot90):
             return np.rot90(stack, k=rot90, axes=[1, 2])
 
@@ -553,7 +557,7 @@ class ModelWrapper:
             stack.astype("float").std(), 10e-20
         )  # prevent div/0
 
-        if quadratic:
+        if self.quadratic:
             return self.single_shot_quadratic(stack, len(self.bias_modes), self.bias_magnitude)
 
         if self.subtract:

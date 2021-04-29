@@ -56,6 +56,13 @@ def Intensity_Metric(imagegen, centerpixel=50, centerrange=15):
     intensities = [np.sum(im[centermin:centermax, centermin:centermax]) for im in imagegen]
     return np.array(intensities)
 
+class ScannerAOdeviceFacade(ScannerStub):
+    def __init__(self, channel, dm_channel=None):
+        if dm_channel is not None:
+            self._dm = DMStub(dm_channel)
+        else:
+            self._dm = None
+        super().__init__(channel)
 
 def optimisation(coeffarray, metric, degree_fitting=2):
     """Polynomial fit over coeffarray range, returns maximum coefficient"""

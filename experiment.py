@@ -182,6 +182,19 @@ def run_experiments(experiments):
 
         Experiment(experiments.method, params)
         log.info(f"----SCAN ALL ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
+    # Dataset collection regime:
+    if experiments.dataset:
+        params.update(
+            scan=-1,
+            iter=5,
+            magnitude=experiments.scan_all,
+            use_bias_only=False,
+            experiment_name=f"_Dataset_R{experiments.dataset}",
+        )
+
+        Dataset(params)
+        log.info(f"----DATASET COLLECTION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
+
     log.info(f"----EXPERIMENTS COMPLETE T={(time.time()-t0)/60:0.1f} min----")
 
     def play_note(note, duration=300):
@@ -220,7 +233,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("-scan_bias", help="", type=float, default=0)
     parser.add_argument("-scan_all", help="", type=float, default=0)
-    parser.add_argument("--no_beep", help="disable beeping",action="store_true")
+    parser.add_argument("-dataset", help="", type=float, default=0)
+    parser.add_argument("--no_beep", help="disable beeping", action="store_true")
     parser.add_argument(
         "--correct_bias_only", help="ignore model estimates other than bias modes", action="store_true",
     )

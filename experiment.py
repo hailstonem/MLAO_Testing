@@ -6,6 +6,9 @@ import argparse
 import sys
 
 from MLAO_correction import ml_estimate, polynomial_estimate
+import os
+import numpy as np
+from MLAO_correction import ml_estimate, collect_dataset  # polynomial_estimate,
 
 from pathlib import Path
 from graph_results import graph, graph_compare
@@ -48,6 +51,24 @@ class mlao_parameters:
         self.__dict__.update(kwargs)
 
 
+def Dataset(params):
+
+    # Do initial correction
+    params.update(
+        save_abb=True, scan=0, iter=3, use_bias_only=True, modelno=-1, experiment_name=f"_system_M-1",
+    )
+    Experiment("quadratic", params)
+    # Collect dataset
+    params.update(load_abb=True, shuffle=True)
+    collect_dataset(
+        bias_modes=[3, 4, 5, 6, 7, 10],
+        applied_modes=[4, 5, 6, 7, 10],
+        applied_steps=np.linspace(-4, 4, 4 * 2 * 2 + 1),
+        bias_magnitudes=[1, 2],
+        params=params,
+    )
+
+
 def Experiment(method, params):
     def graph_exp(jsonfilelist):
         for jsonfile, prefix in jsonfilelist:
@@ -79,7 +100,8 @@ def Experiment(method, params):
                 )
             model = ModelWrapper(params.modelno)
 
-        jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
+        # jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
+        jsonfilelist = ml_estimate(params, quadratic=True)
         graph_exp(jsonfilelist)
 
     elif method in ["mlao", "m", "ml"]:

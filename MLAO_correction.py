@@ -16,6 +16,7 @@ import tensorflow as tf
 
 tf.get_logger().setLevel("ERROR")
 log = getLogger("mlao_log")
+"""
 try:
     from doptical.api.scanner_pb2_grpc import ScannerStub
     from doptical.api.scanner_pb2 import (
@@ -34,6 +35,18 @@ except ImportError:
         ScannerPixelRange,
         ImageStackID,
     )
+"""
+DM = True
+if DM:
+    ##dm related imports
+    from dm_pb2_grpc import DMStub, ScannerStub
+    from dm_pb2 import (
+        Empty,
+        ZernikeModes,
+        ScannerRange,
+        ScannerPixelRange,
+        ImageStackID,
+    )  # redefine ZernikeModes. Possible problems there.
 
 
 def Intensity_Metric(imagegen, centerpixel=50, centerrange=15):

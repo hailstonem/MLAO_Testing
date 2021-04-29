@@ -4,8 +4,6 @@ import logging
 from logging import info, getLogger
 import argparse
 import sys
-
-from MLAO_correction import ml_estimate, polynomial_estimate
 import os
 import numpy as np
 from MLAO_correction import ml_estimate, collect_dataset  # polynomial_estimate,
@@ -43,7 +41,7 @@ class mlao_parameters:
         self.bias_modes = False
         self.bias_magnitude = False
         # self.centerpixel = 64
-        self.centerrange = 15
+        self.centerrange = 62  # 15
         self.path = ".//results"
         self.__dict__.update(kwargs)
 
@@ -111,13 +109,14 @@ def Experiment(method, params):
     elif method in ["comparison", "compare", "c"]:
         jsonfilelist_ml = ml_estimate(params)
         # graph_exp(jsonfilelist_ml)
+        jsonfilelist_c = ml_estimate(params, quadratic=True)
+        """
         model = ModelWrapper(params.modelno)
         jsonfilelist_c = polynomial_estimate(
             model.bias_modes, model.return_modes, model.bias_magnitude, params
-        )
+        )"""
         # graph_exp(jsonfilelist_c)
         graph_exp_compare(jsonfilelist_ml, jsonfilelist_c)
-
     else:
         log.warning("Experiment Parameters not recognised: make sure 'method' is set correctly")
 
@@ -179,8 +178,6 @@ def run_experiments(experiments):
             use_bias_only=False,
             experiment_name=f"_scan_all_M{experiments.model}",
         )
-
-        Experiment(experiments.method, params)
         log.info(f"----SCAN ALL ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
     # Dataset collection regime:
     if experiments.dataset:

@@ -198,15 +198,17 @@ def run_experiments(experiments):
     log.info(f"----EXPERIMENTS COMPLETE T={(time.time()-t0)/60:0.1f} min----")
 
     def play_note(note, duration=300):
-        notes = {'C':-9, 'D':-7, 'E':-5, 'F':-4, 'G':-2, 'A':0, 'B':2}
+        notes = {"C": -9, "D": -7, "E": -5, "F": -4, "G": -2, "A": 0, "B": 2}
         scale = 440
         ratio = 1.05946
-        winsound.Beep(int(scale*ratio**(notes[note])), duration)
+        winsound.Beep(int(scale * ratio ** (notes[note])), duration)
         time.sleep(0.1)
-    if not params.no_beep():
+
+    if not experiments.no_beep:
         song = "E E F G G F E D C C"
         for note in song.split():
             play_note(note)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

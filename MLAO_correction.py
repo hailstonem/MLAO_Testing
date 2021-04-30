@@ -267,7 +267,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         stack = np.zeros((image_dim[0], image_dim[1], len(biaslist)), dtype="float32")
         for i_image in shuffled_order:
             aberration = biaslist[i_image]
-
+            log.debug(f"{aberration}")
             image = set_slm_and_capture_image(
                 scanner, image_dim, aberration, np.arange(len(aberration)), params.repeats
             )

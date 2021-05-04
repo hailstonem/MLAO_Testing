@@ -1,22 +1,29 @@
 # MLAO_Testing
 
-[Now outdated]
- 
-Run from somewhere that can import doptical.api, but also loads ./models
+Interface for collecting datasets and running simple tests and comparisons of ML/conventional methods.
 
-I am assuming that the best way to run the ML_Testing is from a separate virtual environment, (dependencies are in requirements.txt). The version of tensorflow I have specified is cpu-only, so no hardware should be required. I am assuming that it will be straightforward to do this, but am happy to discuss other options when I am back. It may be that the tensorflow-cpu dependencies are not problematic, and can be installed in the same environment as doptical.
+Readme in progress
 
-I didn't get the full signature for the doptical image streaming, so it may require some tweaking to get it working when Matthew completes that side of things.
+## Setup
 
-I get the following output when I ran it in testing:
+Clone from github:
 
-- 2020-09-04 18:23:01.766188: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1304] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 4708 MB memory) -> physical GPU (device: 0, name: GeForce GTX 1060 6GB, pci bus id: 0000:01:00.0, compute capability: 6.1)
-- Mode 4 Applied = 1
-- Mode 4 Estimate = 0
-- Mode 5 Applied = 1
-- Mode 5 Estimate = 0
-- Mode 6 Applied = 1
-- Mode 6 Estimate = 0
-- etc...
+Using anaconda prompt:
+```conda env create -f environment.yaml```
 
-Obviously this is a very simple example, but if we can get this working then that would be a great step, and can move on to iterative correction when I'm back (or Qi, if you fancy editing it, it should be simple enough to do.)
+
+
+If using dm, dowload dmlib, instructions here [https://github.com/jacopoantonello/dmlib], and install dmlib. I did by running
+``` setup.py develop```
+in each of dmlib, zernike, and devwraps folders, but in principle installing directly from the install.bat files should be possible.
+
+Run dm control:
+```app.py```
+--sim flag can be used for testing on systems with no dm.
+
+
+## Running an experiment
+
+Run doptical if it is not already running.
+
+See "How to Run and Experiment" for further details, or use _experiment -h_ to see supported args

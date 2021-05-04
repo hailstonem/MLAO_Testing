@@ -58,7 +58,7 @@ def Dataset(params, kind=None):
     Experiment("quadratic", params)
     # Collect dataset
     step = 0.5
-    if kind='large':
+    if kind == "large":
         applied_steps = np.concatenate(
             [np.linspace(-4, -2, 2 / step, endpoint=False), np.linspace(2 + step, 4, 2 / step)]
         )

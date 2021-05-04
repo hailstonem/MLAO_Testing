@@ -169,21 +169,22 @@ class AberrationHistory:
 def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, params):
     """"""
 
-    def generateAbb(bias_modes, applied_modes, applied_steps, bias_magnitudes, start_aberrations=None):
+    def generateAbb(bias_modes, applied_modes, applied_steps, bias_magnitudes, init_aberrations=None):
         """Returns each list of bias aberrations for AO device to apply- based on cockpit data collection"""
-        if start_aberrations is None:
-            start_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
+        if init_aberrations is None:
+            init_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
 
         for applied_abb in applied_modes:
             for step in applied_steps:
-                start_aberrations[applied_abb] = step
+                current_aberrations = init_aberrations.copy()  # don't reuse same object!
+                current_aberrations[applied_abb] = step
                 biaslist = make_bias_polytope(
-                    start_aberrations, bias_modes, len(start_aberrations), steps=bias_magnitudes
+                    start_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
                 )
                 fprefix = f"A{applied_abb}S{step:.1f}_"
                 yield biaslist, fprefix
 
-    ##outputfolder
+    ## outputfolder
     folder = f"{params.path}/" + time.strftime("%y_%m_%" + "d_Dataset_%M")
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -210,7 +211,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         stack = np.zeros((image_dim[0], image_dim[1], len(biaslist)), dtype="float32")
         for i_image in shuffled_order:
             aberration = biaslist[i_image]
-
+            log.debug(f"{aberration}")
             image = set_slm_and_capture_image(
                 scanner, image_dim, aberration, np.arange(len(aberration)), params.repeats
             )

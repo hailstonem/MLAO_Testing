@@ -49,7 +49,7 @@ class mlao_parameters:
         self.__dict__.update(kwargs)
 
 
-def Dataset(params):
+def Dataset(params, kind=None):
 
     # Do initial correction
     params.update(
@@ -57,11 +57,19 @@ def Dataset(params):
     )
     Experiment("quadratic", params)
     # Collect dataset
+    step = 0.5
+    if kind='large':
+        applied_steps = np.concatenate(
+            [np.linspace(-4, -2, 2 / step, endpoint=False), np.linspace(2 + step, 4, 2 / step)]
+        )
+    else:
+        applied_steps = np.linspace(-2, 2, (2 * 2) / step + 1)
+
     params.update(load_abb=True, shuffle=True)
     collect_dataset(
         bias_modes=[3, 4, 5, 6, 7, 10],
         applied_modes=[4, 5, 6, 7, 10],
-        applied_steps=np.linspace(-4, 4, 4 * 2 * 2 + 1),
+        applied_steps=applied_steps,
         bias_magnitudes=[1, 2],
         params=params,
     )
@@ -189,7 +197,7 @@ def run_experiments(experiments):
             experiment_name=f"_Dataset_R{experiments.dataset}",
         )
 
-        Dataset(params)
+        Dataset(params, experiments.dataset)
         log.info(f"----DATASET COLLECTION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
 
     log.info(f"----EXPERIMENTS COMPLETE T={(time.time()-t0)/60:0.1f} min----")
@@ -232,7 +240,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-scan_bias", help="", type=float, default=0)
     parser.add_argument("-scan_all", help="", type=float, default=0)
-    parser.add_argument("-dataset", help="", type=float, default=0)
+    parser.add_argument("-dataset", help="", type=str, default="")
     parser.add_argument("--no_beep", help="disable beeping", action="store_true")
     parser.add_argument(
         "--correct_bias_only", help="ignore model estimates other than bias modes", action="store_true",

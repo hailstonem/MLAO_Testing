@@ -59,10 +59,12 @@ def Dataset(params, kind=None):
     # Collect dataset
     step = 0.5
     if kind == "large":
+        log.info("large ab dataset")
         applied_steps = np.concatenate(
             [np.linspace(-4, -2, int(2 / step), endpoint=False), np.linspace(2 + step, 4, int(2 / step))]
         )
     else:
+        log.info("small ab dataset")
         applied_steps = np.linspace(-2, 2, int((2 * 2) / step) + 1)
 
     params.update(load_abb=True, shuffle=True)

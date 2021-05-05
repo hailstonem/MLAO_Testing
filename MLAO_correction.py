@@ -10,43 +10,22 @@ import tifffile
 from calibration import get_calibration
 import grpc
 
+##dm/scanner related imports
+from dm.dm_pb2_grpc import DMStub, ScannerStub
+from dm.dm_pb2 import (
+    Empty,
+    ZernikeModes,
+    ScannerRange,
+    ScannerPixelRange,
+    ImageStackID,
+)
+
 os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
 
 tf.get_logger().setLevel("ERROR")
 log = getLogger("mlao_log")
-"""
-try:
-    from doptical.api.scanner_pb2_grpc import ScannerStub
-    from doptical.api.scanner_pb2 import (
-        Empty,
-        ZernikeModes,
-        ScannerRange,
-        ScannerPixelRange,
-        ImageStackID,
-    )
-except ImportError:
-    log.warning("Running in Dummy mode")
-    from dummy_scanner import (
-        ScannerStub,
-        Empty,
-        ZernikeModes,
-        ScannerPixelRange,
-        ImageStackID,
-    )
-"""
-DM = True
-if DM:
-    ##dm related imports
-    from dm_pb2_grpc import DMStub, ScannerStub
-    from dm_pb2 import (
-        Empty,
-        ZernikeModes,
-        ScannerRange,
-        ScannerPixelRange,
-        ImageStackID,
-    )  # redefine ZernikeModes. Possible problems there.
 
 
 class ScannerAOdeviceFacade(ScannerStub):
@@ -67,8 +46,10 @@ class ScannerAOdeviceFacade(ScannerStub):
 
 def scanner_setup():
     channel = grpc.insecure_channel("localhost:50051")
-    if DM:
+    if dm:
         dm_channel = grpc.insecure_channel("localhost:50052")
+    else:
+        dm_channel = None
     scanner = ScannerAOdeviceFacade(channel, dm_channel)
 
     image_dim = (128, 128)  # set as appropriate
@@ -190,7 +171,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         os.mkdir(folder)
 
     ## Set up scan
-    image_dim, scanner = scanner_setup()
+    image_dim, scanner = scanner_setup(params.dm)
     ## load system correction
     start_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
     if params.load_abb:
@@ -239,7 +220,7 @@ def ml_estimate(params, quadratic=False):
     calibration = get_calibration([7])
     log.debug(calibration)
 
-    image_dim, scanner = scanner_setup()
+    image_dim, scanner = scanner_setup(params.dm)
 
     if params.scan == -1:
         scan_modes = return_modes
@@ -570,6 +551,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
     )
+    parser.add_argument("--dm", help="run with dm", action="store_true")
+    parser.add_argument("--slm", help="run with slm", action="store_true")
     parser.add_argument("-iter", help="specifies number of iterations for correction", type=int, default=0)
     parser.add_argument(
         "-scan",

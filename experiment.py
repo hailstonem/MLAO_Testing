@@ -24,6 +24,8 @@ class mlao_parameters:
     """Container for MLAO default args"""
 
     def __init__(self, **kwargs):
+        self.dm = False
+        self.slm = False
         self.dummy = False
         self.shuffle = False
         self.scan = 0
@@ -222,6 +224,12 @@ if __name__ == "__main__":
     # parser.add_argument(
     #    "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
     # )
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
+    )
+    parser.add_argument("--dm", help="run with dm", action="store_true")
+    parser.add_argument("--slm", help="run with slm", action="store_true")
     parser.add_argument(
         "-stability",
         help="Run 18 iterations of correction using system aberrations. Uses parameters from specified model",
@@ -276,4 +284,6 @@ if __name__ == "__main__":
     elif args.log == "error":
         log.setLevel(40)
 
+    if not any((args.slm, args.dummy, args.dm)):
+        raise RuntimeError("Please specify one of the flags --dm --slm --dummy")
     run_experiments(args)

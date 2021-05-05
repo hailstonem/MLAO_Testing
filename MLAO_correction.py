@@ -29,6 +29,8 @@ log = getLogger("mlao_log")
 
 
 class ScannerAOdeviceFacade(ScannerStub):
+    """Unified interface for DM or SLM control, also controls image scanner"""
+
     def __init__(self, channel, dm_channel=None):
         if dm_channel is not None:
             self._dm = DMStub(dm_channel)
@@ -44,7 +46,9 @@ class ScannerAOdeviceFacade(ScannerStub):
             self.SetSLMZernikeModes(ZM)
 
 
-def scanner_setup():
+def scanner_setup(dm):
+    """Initiate gRPC connection to doptical/dm and set image collection settings"""
+    # SET CHANNEL(s) HERE
     channel = grpc.insecure_channel("localhost:50051")
     if dm:
         dm_channel = grpc.insecure_channel("localhost:50052")
@@ -497,12 +501,6 @@ def coeff_to_json(filename, start_aberrations, return_modes, pred, iterations, b
 def save_tif(filename, data):
 
     tifffile.imsave(filename, data, append=True)
-
-
-def non_colliding_prefix(path):
-    indexes = set(np.arange(0, 999))
-    used_index = set([int(x.split("_")[0]) for x in os.listdir(path) if len(x.split("_")[0]) == 3])
-    return np.random.choice(list(indexes - used_index))
 
 
 def time_prefix():

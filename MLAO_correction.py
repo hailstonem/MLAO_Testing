@@ -164,7 +164,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
                 current_aberrations = init_aberrations.copy()  # don't reuse same object!
                 current_aberrations[applied_abb] = step
                 biaslist = make_bias_polytope(
-                    start_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
+                    current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
                 )
                 fprefix = f"A{applied_abb}S{step:.1f}_"
                 yield biaslist, fprefix

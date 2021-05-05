@@ -9,3 +9,6 @@ dependencies:
   - matplotlib
   - grpc-cpp
   - tifffile
+  - pip
+  - pip:
+      - colorednoise

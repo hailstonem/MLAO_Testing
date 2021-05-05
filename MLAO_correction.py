@@ -76,14 +76,14 @@ def scanner_setup():
     return image_dim, scanner
 
 
-def set_slm_and_capture_image(scanner, image_dim, aberration, aberration_modes, repeats):
+def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, repeats):
     """Collect and format image after applying aberration"""
     image = np.zeros(image_dim)
     for _ in range(repeats):
         log.debug([np.round(a, 1) for a in aberration])
 
         ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
-        scanner.SetSLMZernikeModes(ZM)
+        scanner.setAODeviceModes(ZM)
 
         time.sleep(1.5)
         image += capture_image(scanner)[2:, 2:]
@@ -212,7 +212,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         for i_image in shuffled_order:
             aberration = biaslist[i_image]
             log.debug(f"{aberration}")
-            image = set_slm_and_capture_image(
+            image = set_ao_and_capture_image(
                 scanner, image_dim, aberration, np.arange(len(aberration)), params.repeats
             )
             stack[:, :, i_image] = image
@@ -297,7 +297,7 @@ def ml_estimate(params, quadratic=False):
             for i_image in shuffled_order:
                 aberration = list_of_aberrations_lists[i_image]
 
-                image = set_slm_and_capture_image(
+                image = set_ao_and_capture_image(
                     scanner, image_dim, aberration, aberration_modes, params.repeats
                 )
 
@@ -358,7 +358,7 @@ def ml_estimate(params, quadratic=False):
                 list_of_aberrations_lists = make_bias_polytope(
                     start_aberrations, bias_modes, max(return_modes) + 1, steps=[]
                 )
-                image = set_slm_and_capture_image(
+                image = set_ao_and_capture_image(
                     scanner, image_dim, list_of_aberrations_lists[0], aberration_modes, 1
                 )
                 save_tif(tifname, image.astype("float32"))

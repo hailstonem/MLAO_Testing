@@ -9,8 +9,8 @@ import queue
 
 import dmlib.zpanel as zpanel
 import grpc
-import dm_pb2
-import dm_pb2_grpc
+from dm import dm_pb2
+from dm import dm_pb2_grpc
 
 
 URI = "[::]:50052"

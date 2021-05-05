@@ -170,7 +170,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
                 yield biaslist, fprefix
 
     ## outputfolder
-    folder = f"{params.path}/" + time.strftime("%y_%m_%" + "d_Dataset_%M")
+    folder = f"{params.path}/" + time.strftime("%y_%m_%" + "d_Dataset_%H%M")
     if not os.path.exists(folder):
         os.mkdir(folder)
 

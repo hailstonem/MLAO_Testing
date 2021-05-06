@@ -158,15 +158,16 @@ def graph(prefix, folder, filelist):
         modes = [str(int(k) + 1) for k, v in d["Applied"].items()]
         applied[zero_i] = [float(x) for x in d["Applied"].values()]
         estimated[zero_i] = [float(x) for x in d["Estimated"].values()]
-        brightness[zero_i] = [float(x) for x in d["Estimated"].values()]
+        brightness[zero_i] = float(d["Brightness"])
 
     convergence_plot(modes, applied[:-1], folder, prefix)
+    brightness_plot(brightness, folder, prefix)
 
 
 def convergence_plot(modes, est_array, folder, prefix):
 
     for a in np.moveaxis(est_array, 1, 0):
-        plt.plot([str(x) for x in np.arange(len(a))], a, marker=np.random.choice(["D", "o", "d", "s", "p"]))
+        plt.plot([str(x) for x in range(len(a))], a, marker=np.random.choice(["D", "o", "d", "s", "p"]))
 
     plt.legend(
         modes, loc="upper right", bbox_to_anchor=(1.25, 1),

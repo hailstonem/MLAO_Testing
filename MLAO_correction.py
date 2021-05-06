@@ -10,30 +10,103 @@ import tifffile
 from calibration import get_calibration
 import grpc
 
+##dm/scanner related imports
+from dm.dm_pb2_grpc import DMStub, ScannerStub
+from dm.dm_pb2 import (
+    Empty,
+    ZernikeModes,
+    ScannerRange,
+    ScannerPixelRange,
+    ImageStackID,
+)
+
 os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
 import tensorflow as tf
 
 tf.get_logger().setLevel("ERROR")
 log = getLogger("mlao_log")
-try:
-    from doptical.api.scanner_pb2_grpc import ScannerStub
-    from doptical.api.scanner_pb2 import (
-        Empty,
-        ZernikeModes,
-        ScannerRange,
-        ScannerPixelRange,
-        ImageStackID,
-    )
-except ImportError:
-    log.warning("Running in Dummy mode")
-    from dummy_scanner import (
-        ScannerStub,
-        Empty,
-        ZernikeModes,
-        ScannerPixelRange,
-        ImageStackID,
-    )
+
+
+class ScannerAOdeviceFacade(ScannerStub):
+    """Unified interface for DM or SLM control, also controls image scanner"""
+
+    def __init__(self, channel, dm_channel=None):
+        if dm_channel is not None:
+            self._dm = DMStub(dm_channel)
+        else:
+            self._dm = None
+        super().__init__(channel)
+
+    def setAODeviceModes(self, ZM):
+        if self._dm:
+
+            self._dm.SetDMZernikeModes(ZM)
+        else:
+            self.SetSLMZernikeModes(ZM)
+
+
+def scanner_setup(dm):
+    """Initiate gRPC connection to doptical/dm and set image collection settings"""
+    # SET CHANNEL(s) HERE
+    channel = grpc.insecure_channel("localhost:50051")
+    if dm:
+        dm_channel = grpc.insecure_channel("localhost:50052")
+    else:
+        dm_channel = None
+    scanner = ScannerAOdeviceFacade(channel, dm_channel)
+
+    image_dim = (128, 128)  # set as appropriate
+    scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
+    return image_dim, scanner
+
+
+def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, repeats):
+    """Collect and format image after applying aberration"""
+    image = np.zeros(image_dim)
+    for _ in range(repeats):
+        log.debug([np.round(a, 1) for a in aberration])
+
+        ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
+        scanner.setAODeviceModes(ZM)
+
+        time.sleep(1.5)
+        image += capture_image(scanner)[2:, 2:]
+    image = -image  # Image is inverted (also clip flyback)
+    image = image[:, ::-1]  # new correct flip?
+    return image
+
+
+def capture_image(scanner, timeout=5000, retry_delay=10):
+    id = scanner.StartScan(Empty()).id
+    t_start = time.time()
+
+    # Set image id to search for
+    req_id = ImageStackID()
+    req_id.id = id
+
+    images_found = False
+    while not images_found:
+        images = scanner.GetScanImages(req_id).images
+
+        if len(images):
+            images_found = True
+
+        t_elapsed = time.time() - t_start
+
+        # Timeout if no image found
+        if t_elapsed > timeout / 1000:
+            raise RuntimeError("Image capture failed: Timeout on image capture")
+
+        # retry delay
+        time.sleep(retry_delay / 1000)
+
+    image = images[0]
+
+    return_image = np.array(image.data).reshape(image.height, image.width)
+    scanner.StopScan(Empty())
+
+    return return_image.astype("float32")
 
 
 def Intensity_Metric(imagegen, centerpixel=50, centerrange=15):
@@ -58,22 +131,6 @@ def optimisation(coeffarray, metric, degree_fitting=2):
     return maxcoeff
 
 
-def set_slm_and_capture_image(scanner, image_dim, aberration, aberration_modes, repeats):
-    """Collect and format image after applying aberration"""
-    image = np.zeros(image_dim)
-    for _ in range(repeats):
-        log.debug([np.round(a, 1) for a in aberration])
-
-        ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
-        scanner.SetSLMZernikeModes(ZM)
-
-        time.sleep(1.5)
-        image += capture_image(scanner)[2:, 2:]
-    image = -image  # Image is inverted (also clip flyback)
-    image = image[:, ::-1]  # new correct flip?
-    return image
-
-
 class AberrationHistory:
     """Store current and previous aberrations as lists: note aberration list is longer than prediction list"""
 
@@ -94,135 +151,6 @@ class AberrationHistory:
             self.aberration.append(self.aberration[-1] - prediction)
 
 
-"""
-def polynomial_estimate(bias_modes, return_modes, bias_magnitude, params):
-    '''Performs correction based on 3n polynomial fitting. Same API as ml_estimate, but also requires bias_modes parameter'''
-
-    rnd = time_prefix("./results")
-    folder = params.path + "/" + time.strftime("%y%m%" + "d") + params.experiment_name
-    jsonfilelist = []
-    if not os.path.exists(folder):
-        os.mkdir(folder)
-
-    channel = grpc.insecure_channel("localhost:50051")
-    scanner = ScannerStub(channel)
-
-    if params.scan == -1:
-        scan_modes = return_modes
-    elif params.scan == -2:
-        scan_modes = bias_modes
-    else:
-        scan_modes = [params.scan]
-    log.debug(f"scan modes: {scan_modes}")
-
-    for mode in scan_modes:
-
-        start_aberrations = np.zeros((max(bias_modes) + 1))
-        jsonfile = folder + "/%03d_%s_coefficients.json" % (rnd, mode,)
-        tifname = folder + "/%03d_%s_iterations.tif" % (rnd, mode)
-
-        if params.load_abb:
-            start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
-            log.debug("abberation loaded")
-
-        if mode:
-            start_aberrations[mode] += params.magnitude
-        tracked_aberrations = start_aberrations
-        aberration_modes = [int(i) for i in range(len(tracked_aberrations))]
-        abb_his = AberrationHistory(start_aberrations)
-
-        # Set up scan
-        image_dim = (128, 128)  # set as appropriate
-        scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
-
-        for it in range(params.iter + 1):
-            log.info(f"it {it} coefficients:{[np.round(a, 1) for a in tracked_aberrations]}")
-
-            for bn, bias in enumerate(bias_modes):
-                # Get lists of biases and aberrations
-                list_of_aberrations_lists = make_bias_polytope(
-                    tracked_aberrations, [bias], max(bias_modes) + 1, steps=[bias_magnitude]
-                )
-
-                # randomize image collection to minimise effects of bleaching
-                shuffled_order = np.arange(len(list_of_aberrations_lists))
-                if params.shuffle:
-                    np.random.shuffle(shuffled_order)
-
-                # Get stack of images
-                stack = np.zeros((image_dim[0], image_dim[1], len(list_of_aberrations_lists)))
-                for i_image in shuffled_order:
-                    aberration = list_of_aberrations_lists[i_image]
-
-                    image = set_slm_and_capture_image(
-                        scanner, image_dim, aberration, aberration_modes, params.repeats
-                    )
-
-                    temptifname = folder + "/%03d_%s_%s_temp_.tif" % (rnd, mode, it)
-                    save_tif(temptifname, image)
-
-                    stack[:, :, i_image] = image
-
-                # format
-                stack = np.rollaxis(stack, 2, 0)
-
-                # calculate metric
-                intensities = Intensity_Metric(stack, stack.shape[1] // 2, params.centerrange)
-                coeffarray = [x[bias] for x in list_of_aberrations_lists]
-                optimal = optimisation(coeffarray, intensities, degree_fitting=2)
-                log.debug(f"Mode {bias} Fit: {optimal}")
-
-                # save tif and brightness from image before correction
-                if bn == 0:
-                    log.debug("saving tif")
-                    save_tif(tifname, stack[0, :, :].astype("float32"))
-                    brightness = np.mean(stack[0])
-                # use this as starting point for next correction
-                tracked_aberrations[bias] = optimal
-            abb_his.update(aberration=tracked_aberrations)
-
-            coeff_to_json(
-                jsonfile,
-                abb_his.aberration[it],
-                bias_modes,
-                abb_his.prediction[it][bias_modes],
-                it + 1,
-                brightness=brightness,
-                name="quadratic",
-            )
-
-            if it == params.iter:
-
-                list_of_aberrations_lists = make_bias_polytope(
-                    tracked_aberrations, bias_modes, max(bias_modes) + 1, steps=[]
-                )
-                image = set_slm_and_capture_image(
-                    scanner, image_dim, list_of_aberrations_lists[0], aberration_modes, 1
-                )
-                save_tif(tifname, image.astype("float32"))
-                coeff_to_json(
-                    jsonfile,
-                    tuple(tracked_aberrations),
-                    bias_modes,
-                    np.zeros_like(tracked_aberrations)[bias_modes],
-                    it + 2,
-                    brightness=np.mean(image),
-                    name="quadratic",
-                )
-        jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
-    return jsonfilelist
-"""
-
-
-def scanner_setup():
-    channel = grpc.insecure_channel("localhost:50051")
-    scanner = ScannerStub(channel)
-
-    image_dim = (128, 128)  # set as appropriate
-    scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
-    return image_dim, scanner
-
-
 def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, params):
     """"""
 
@@ -236,18 +164,18 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
                 current_aberrations = init_aberrations.copy()  # don't reuse same object!
                 current_aberrations[applied_abb] = step
                 biaslist = make_bias_polytope(
-                    start_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
+                    current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
                 )
                 fprefix = f"A{applied_abb}S{step:.1f}_"
                 yield biaslist, fprefix
 
     ## outputfolder
-    folder = f"{params.path}/" + time.strftime("%y_%m_%" + "d_Dataset_%M")
+    folder = f"{params.path}/" + time.strftime("%y_%m_%" + "d_Dataset_%H%M")
     if not os.path.exists(folder):
         os.mkdir(folder)
 
     ## Set up scan
-    image_dim, scanner = scanner_setup()
+    image_dim, scanner = scanner_setup(params.dm)
     ## load system correction
     start_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
     if params.load_abb:
@@ -269,7 +197,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         for i_image in shuffled_order:
             aberration = biaslist[i_image]
             log.debug(f"{aberration}")
-            image = set_slm_and_capture_image(
+            image = set_ao_and_capture_image(
                 scanner, image_dim, aberration, np.arange(len(aberration)), params.repeats
             )
             stack[:, :, i_image] = image
@@ -296,7 +224,7 @@ def ml_estimate(params, quadratic=False):
     calibration = get_calibration([7])
     log.debug(calibration)
 
-    image_dim, scanner = scanner_setup()
+    image_dim, scanner = scanner_setup(params.dm)
 
     if params.scan == -1:
         scan_modes = return_modes
@@ -354,7 +282,7 @@ def ml_estimate(params, quadratic=False):
             for i_image in shuffled_order:
                 aberration = list_of_aberrations_lists[i_image]
 
-                image = set_slm_and_capture_image(
+                image = set_ao_and_capture_image(
                     scanner, image_dim, aberration, aberration_modes, params.repeats
                 )
 
@@ -415,7 +343,7 @@ def ml_estimate(params, quadratic=False):
                 list_of_aberrations_lists = make_bias_polytope(
                     start_aberrations, bias_modes, max(return_modes) + 1, steps=[]
                 )
-                image = set_slm_and_capture_image(
+                image = set_ao_and_capture_image(
                     scanner, image_dim, list_of_aberrations_lists[0], aberration_modes, 1
                 )
                 save_tif(tifname, image.astype("float32"))
@@ -441,66 +369,6 @@ def ml_estimate(params, quadratic=False):
                     data = dict(zip(return_modes, [float(p) for p in start_aberrations[return_modes]]))
                     json.dump(data, cofile, indent=1)
     return jsonfilelist
-
-
-"""
-def capture_image(scanner):
-    # time.sleep(0.5)
-    scanner.StartScan(Empty())
-    # time.sleep(1)
-    t0 = time.time()
-    images_available = False
-    while not images_available:
-        time.sleep(0.1)
-        images_length = scanner.GetScanImagesLength(Empty()).length
-
-        if images_length > 0:
-            time.sleep(0.1)
-            images_available = True
-
-    images = scanner.GetScanImages(Empty()).images
-
-    # assert(len(images) == 1)
-
-    image = images[0]
-
-    return_image = np.array(image.data).reshape(image.height, image.width)
-    scanner.StopScan(Empty())
-
-    return return_image
-"""
-
-
-def capture_image(scanner, timeout=5000, retry_delay=10):
-    id = scanner.StartScan(Empty()).id
-    t_start = time.time()
-
-    # Set image id to search for
-    req_id = ImageStackID()
-    req_id.id = id
-
-    images_found = False
-    while not images_found:
-        images = scanner.GetScanImages(req_id).images
-
-        if len(images):
-            images_found = True
-
-        t_elapsed = time.time() - t_start
-
-        # Timeout if no image found
-        if t_elapsed > timeout / 1000:
-            raise RuntimeError("Image capture failed: Timeout on image capture")
-
-        # retry delay
-        time.sleep(retry_delay / 1000)
-
-    image = images[0]
-
-    return_image = np.array(image.data).reshape(image.height, image.width)
-    scanner.StopScan(Empty())
-
-    return return_image.astype("float32")
 
 
 class ModelWrapper:
@@ -635,12 +503,6 @@ def save_tif(filename, data):
     tifffile.imsave(filename, data, append=True)
 
 
-def non_colliding_prefix(path):
-    indexes = set(np.arange(0, 999))
-    used_index = set([int(x.split("_")[0]) for x in os.listdir(path) if len(x.split("_")[0]) == 3])
-    return np.random.choice(list(indexes - used_index))
-
-
 def time_prefix():
 
     # index = np.random.randint(0, 10)
@@ -687,6 +549,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
     )
+    parser.add_argument("--dm", help="run with dm", action="store_true")
+    parser.add_argument("--slm", help="run with slm", action="store_true")
     parser.add_argument("-iter", help="specifies number of iterations for correction", type=int, default=0)
     parser.add_argument(
         "-scan",

@@ -24,6 +24,8 @@ class mlao_parameters:
     """Container for MLAO default args"""
 
     def __init__(self, **kwargs):
+        self.dm = False
+        self.slm = False
         self.dummy = False
         self.shuffle = False
         self.scan = 0
@@ -58,12 +60,14 @@ def Dataset(params, kind=None):
     Experiment("quadratic", params)
     # Collect dataset
     step = 0.5
-    if kind='large':
+    if kind == "large":
+        log.info("large ab dataset")
         applied_steps = np.concatenate(
-            [np.linspace(-4, -2, 2 / step, endpoint=False), np.linspace(2 + step, 4, 2 / step)]
+            [np.linspace(-4, -2, int(2 / step), endpoint=False), np.linspace(2 + step, 4, int(2 / step))]
         )
     else:
-        applied_steps = np.linspace(-2, 2, (2 * 2) / step + 1)
+        log.info("small ab dataset")
+        applied_steps = np.linspace(-2, 2, int((2 * 2) / step) + 1)
 
     params.update(load_abb=True, shuffle=True)
     collect_dataset(
@@ -220,6 +224,12 @@ if __name__ == "__main__":
     # parser.add_argument(
     #    "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
     # )
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
+    )
+    parser.add_argument("--dm", help="run with dm", action="store_true")
+    parser.add_argument("--slm", help="run with slm", action="store_true")
     parser.add_argument(
         "-stability",
         help="Run 18 iterations of correction using system aberrations. Uses parameters from specified model",
@@ -274,4 +284,6 @@ if __name__ == "__main__":
     elif args.log == "error":
         log.setLevel(40)
 
+    if not any((args.slm, args.dummy, args.dm)):
+        raise RuntimeError("Please specify one of the flags --dm --slm --dummy")
     run_experiments(args)

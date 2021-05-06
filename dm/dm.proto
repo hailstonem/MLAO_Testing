@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package scanner;
+
+service DM {
+    rpc SetDMZernikeModes (ZernikeModes) returns (Empty) {};
+    rpc Quit (Empty) returns (Empty) {};
+}
+
+message Empty {
+}
+
+message ZernikeModes {
+    repeated int32 modes = 1;
+    repeated float amplitudes = 2;
+}
+
+message Timeout {
+    float timeout = 1;
+}
+
+
+service Scanner {
+    rpc StartScan (Empty) returns (ScannerResponse) {};
+    rpc StartLive (Empty) returns (Empty) {};
+    rpc StopScan (Empty) returns (Empty) {};
+    rpc ClearScanImages (Empty) returns (Empty) {};
+    rpc Capture (Timeout) returns (Images) {};
+    rpc SetScanRange (ScannerRange) returns (Empty) {};
+    rpc SetScanPixelRange (ScannerPixelRange) returns (Empty) {};
+    rpc GetScanRange (Empty) returns (ScannerRange) {};
+    rpc GetScanPixelRange (Empty) returns (ScannerPixelRange) {};
+    rpc GetScanImages (ImageStackID) returns (Images) {};
+    rpc GetScanImagesLength (Empty) returns (ImagesLength) {};
+    rpc GetScanImageBytes (Empty) returns (Array) {};
+    rpc SetPiezoPos (PiezoPos) returns (Empty) {};
+    rpc SetSLMZernikeModes (ZernikeModes) returns (Empty) {};
+}
+message ScannerResponse {
+    string id = 1;
+}
+
+message Filename {
+    string filename = 1;
+}
+
+message ScannerStatus {
+    int32 status_code = 1;
+    string message = 2;
+}
+
+message ScannerRange {
+	float xmin = 1;
+	float xmax = 2;
+	float ymin = 3;
+	float ymax = 4;
+}
+
+message ScannerPixelRange {
+    float x = 1;
+    float y = 2;
+}
+
+message Image {
+ repeated float data = 1;
+ int32 width = 2;
+ int32 height = 3;
+}
+
+message ImageStackID {
+    string id = 1;
+}
+
+message Images {
+    repeated Image images = 1;
+}
+
+message ImagesLength {
+    int32 length = 1;
+}
+
+message Array {
+    bytes array = 1;
+}
+
+message PiezoPos {
+    float z = 1;
+}

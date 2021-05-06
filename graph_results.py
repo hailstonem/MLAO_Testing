@@ -15,45 +15,31 @@ sys.path.append("..\\ML-Zernicke-estimation\\")
 # from imagegen import make_betas_polytope
 
 
-def make_bias_polytope(start_aberrations, offset_axes, nk, steps=(1)):
-    """Return list of list of zernike amplitudes ('betas') for generating cross-polytope pattern of psfs
-    """
-    # beta (diffraction-limited), N_beta = cpsf.czern.nk
-    beta = np.zeros(nk, dtype=np.float32)
-    beta[:] = start_aberrations[:]
-    # beta[0] = 1.0
-    # add offsets to beta
-
-    betas = []
-    betas.append(beta)
-    for axis in offset_axes:
-        for step in steps:
-            plus_offset = beta.copy()
-            plus_offset[axis] += 1 * step
-            betas.append(plus_offset)
-        for step in steps:
-            minus_offset = beta.copy()
-            minus_offset[axis] -= 1 * step
-            betas.append(minus_offset)
-
-    return betas
-
-
-def splitx(x):
-    def check_int(string):
-        if string.isdigit():
-            return int(string)
-        else:
-            return 0
-
-    def split(stg):
-        return tuple([check_int(stg.split("_")[xk]) for xk in x])
-
-    return split
-
-
 def save_phase(folder, prefix, index, est_acc, en):
     from fourier import Fraunhofer
+
+    def make_bias_polytope(start_aberrations, offset_axes, nk, steps=(1)):
+        """Return list of list of zernike amplitudes ('betas') for generating cross-polytope pattern of psfs
+        """
+        # beta (diffraction-limited), N_beta = cpsf.czern.nk
+        beta = np.zeros(nk, dtype=np.float32)
+        beta[:] = start_aberrations[:]
+        # beta[0] = 1.0
+        # add offsets to beta
+
+        betas = []
+        betas.append(beta)
+        for axis in offset_axes:
+            for step in steps:
+                plus_offset = beta.copy()
+                plus_offset[axis] += 1 * step
+                betas.append(plus_offset)
+            for step in steps:
+                minus_offset = beta.copy()
+                minus_offset[axis] -= 1 * step
+                betas.append(minus_offset)
+
+        return betas
 
     max_order = 6
     nk = (max_order + 1) * (max_order + 2) // 2
@@ -78,11 +64,6 @@ def save_phase(folder, prefix, index, est_acc, en):
     )
 
 
-def keytoint(d):
-    k, v = d
-    return int(k)
-
-
 class Iterations_dict(UserDict):
     def __init__(self, folder, filelist, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,10 +71,10 @@ class Iterations_dict(UserDict):
         if len(filelist) == 1:
             with open(folder + "\\" + filelist[0]) as openfile:
                 d_file = json.load(openfile)
-                self.data = OrderedDict(sorted(d_file.items(), key=keytoint))
+                self.data = OrderedDict(sorted(d_file.items(), key=self.keytoint))
         else:
             self.data = OrderedDict()
-            filelist.sort(key=splitx((0, 2)))
+            filelist.sort(key=self.splitx((0, 2)))
             for en, f in enumerate(filelist):
                 with open(folder + f) as openfile:
                     d = json.load(openfile)
@@ -103,6 +84,22 @@ class Iterations_dict(UserDict):
                         self.data[str(en)] = d["1"]
                     else:
                         print("No matching dict found")
+
+    def splitx(self, x):
+        def check_int(string):
+            if string.isdigit():
+                return int(string)
+            else:
+                return 0
+
+        def split(stg):
+            return tuple([check_int(stg.split("_")[xk]) for xk in x])
+
+        return split
+
+    def keytoint(self, d):
+        k, v = d
+        return int(k)
 
 
 def main(prefix, folder):

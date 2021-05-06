@@ -160,7 +160,7 @@ def graph(prefix, folder, filelist):
         estimated[zero_i] = [float(x) for x in d["Estimated"].values()]
         brightness[zero_i] = float(d["Brightness"])
 
-    convergence_plot(modes, applied[:-1], folder, prefix)
+    convergence_plot(modes, applied, folder, prefix)
     brightness_plot(brightness, folder, prefix)
 
 

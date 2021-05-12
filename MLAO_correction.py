@@ -15,10 +15,9 @@ from dm.dm_pb2_grpc import DMStub, ScannerStub
 from dm.dm_pb2 import (
     Empty,
     ZernikeModes,
-    ScannerRange,
-    ScannerPixelRange,
     ImageStackID,
 )
+import dummy_scanner
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_KERAS"] = "1"
@@ -32,11 +31,15 @@ class ScannerAOdeviceFacade(ScannerStub):
     """Unified interface for DM or SLM control, also controls image scanner"""
 
     def __init__(self, channel, dm_channel=None):
+
         if dm_channel is not None:
             self._dm = DMStub(dm_channel)
         else:
             self._dm = None
         super().__init__(channel)
+        self.Empty = Empty
+        self.ZernikeModes = ZernikeModes
+        self.ImageStackID = ImageStackID
 
     def setAODeviceModes(self, ZM):
         if self._dm:
@@ -47,18 +50,25 @@ class ScannerAOdeviceFacade(ScannerStub):
             self.SetSLMZernikeModes(ZM)
 
 
-def scanner_setup(dm):
+def scanner_setup(dm, dummy):
     """Initiate gRPC connection to doptical/dm and set image collection settings"""
-    # SET CHANNEL(s) HERE
-    channel = grpc.insecure_channel("10.200.20.36:50051")
-    if dm:
-        dm_channel = grpc.insecure_channel("localhost:50052")
+    if dummy:
+        scanner = dummy_scanner.ScannerStub(None, None)
+        log.debug("USING DUMMY SCANNER")
+        image_dim = (128, 128)
+        scanner.SetScanPixelRange(scanner.ScannerPixelRange(*image_dim))
     else:
-        dm_channel = None
-    scanner = ScannerAOdeviceFacade(channel, dm_channel)
+        # SET CHANNEL(s) HERE
+        channel = grpc.insecure_channel("10.200.20.36:50051")
+        if dm:
+            dm_channel = grpc.insecure_channel("localhost:50052")
+        else:
+            dm_channel = None
 
-    image_dim = (128, 128)  # set as appropriate
-    #scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
+        scanner = ScannerAOdeviceFacade(channel, dm_channel)
+        # take settings from capture
+        image_dim = capture_image(scanner).shape
+        # scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1], y=image_dim[0]))
     return image_dim, scanner
 
 
@@ -68,7 +78,7 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
     for _ in range(repeats):
         log.debug([np.round(a, 1) for a in aberration])
 
-        ZM = ZernikeModes(modes=[a+1 for a in aberration_modes], amplitudes=aberration)
+        ZM = scanner.ZernikeModes(modes=[a + 1 for a in aberration_modes], amplitudes=aberration)
         scanner.setAODeviceModes(ZM)
 
         time.sleep(0.01)#0.01
@@ -79,11 +89,11 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
 
 
 def capture_image(scanner, timeout=5000, retry_delay=10):
-    id = scanner.StartScan(Empty()).id
+    id = scanner.StartScan(scanner.Empty()).id
     t_start = time.time()
 
     # Set image id to search for
-    req_id = ImageStackID()
+    req_id = scanner.ImageStackID()
     req_id.id = id
 
     images_found = False
@@ -105,7 +115,7 @@ def capture_image(scanner, timeout=5000, retry_delay=10):
     image = images[0]
 
     return_image = np.array(image.data).reshape(image.height, image.width)
-    scanner.StopScan(Empty())
+    scanner.StopScan(scanner.Empty())
 
     return return_image.astype("float32")
 
@@ -153,7 +163,7 @@ class AberrationHistory:
 
 
 def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, params):
-    """"""
+    """short dataset collection experiment"""
 
     def generateAbb(bias_modes, applied_modes, applied_steps, bias_magnitudes, init_aberrations=None):
         """Returns each list of bias aberrations for AO device to apply- based on cockpit data collection"""
@@ -176,7 +186,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         os.mkdir(folder)
 
     ## Set up scan
-    image_dim, scanner = scanner_setup(params.dm)
+    image_dim, scanner = scanner_setup(params.dm, params.dummy)
     ## load system correction
     start_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
     if params.load_abb:
@@ -225,7 +235,7 @@ def ml_estimate(params, quadratic=False):
     calibration = get_calibration([7])
     log.debug(calibration)
 
-    image_dim, scanner = scanner_setup(params.dm)
+    image_dim, scanner = scanner_setup(params.dm, params.dummy)
 
     if params.scan == -1:
         scan_modes = return_modes
@@ -587,6 +597,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("-path", help="output path", type=str, default=".//results")
     parser.add_argument("-experiment_name", help="add name for folder", type=str, default="")
+
+    args = parser.parse_args()
+
     if args.log == "info":
         log.setLevel(20)
     elif args.log == "debug":
@@ -596,14 +609,4 @@ if __name__ == "__main__":
     elif args.log == "error":
         log.setLevel(40)
 
-    args = parser.parse_args()
-
-    if args.dummy:
-        from dummy_scanner import (
-            ScannerStub,
-            Empty,
-            ZernikeModes,
-            ScannerPixelRange,
-            ImageStackID,
-        )
     ml_estimate(args)

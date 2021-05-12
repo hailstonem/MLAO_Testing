@@ -32,7 +32,7 @@ class ZernikeModes:
 
 class ScannerStub:
     ### dummy ScannerStub for testing###
-    def __init__(self, channel):
+    def __init__(self, channel, dm_channel):
         self.max_order = 6
         self.nk = (self.max_order + 1) * (self.max_order + 2) // 2
         self.NA = 1.2
@@ -43,11 +43,18 @@ class ScannerStub:
         self.scan = None
         self.x = 0
         self.y = 0
+        self.Empty = Empty
+        self.ZernikeModes = ZernikeModes
+        self.ImageStackID = ImageStackID
+        self.ScannerPixelRange = ScannerPixelRange
+
+    def setAODeviceModes(self, ZM):
+        self.SetSLMZernikeModes(ZM)
 
     def SetSLMZernikeModes(self, ZM):
         assert len(ZM.modes) == len(ZM.amplitudes)
         aberrations = np.zeros(self.nk)
-        aberrations[ZM.modes] = ZM.amplitudes
+        aberrations[[m - 1 for m in ZM.modes]] = ZM.amplitudes
         self.aberrations = aberrations
 
     def SetScanPixelRange(self, PixelRange):

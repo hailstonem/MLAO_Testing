@@ -1,3 +1,4 @@
+# Copyright (C) Martin Hailstone 2020-2021
 import os
 import time
 import json
@@ -81,10 +82,20 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
         ZM = scanner.ZernikeModes(modes=[a + 1 for a in aberration_modes], amplitudes=aberration)
         scanner.setAODeviceModes(ZM)
 
-        time.sleep(0.01)#0.01
-        image += capture_image(scanner)[2:, 2:]
-    image = -image  # Image is inverted (also clip flyback)
-    image = image[:, ::-1]  # new correct flip?
+        # time.sleep(1.5)  # 0.01 #Empirical SLM refresh time (+capture)
+
+        time.sleep(0.01)  # 0.01 #Safe DM refresh
+
+        image += capture_image(scanner)
+
+    # MCAO image orientation
+    image = np.rot90(image, 3)
+    image = -image  # Image is inverted
+
+    # Qi/2P image orientation
+    # image = -image  # Image is inverted
+    # image = image[:, ::-1]  # new correct flip?
+
     return image
 
 

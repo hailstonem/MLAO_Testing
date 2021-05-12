@@ -1,3 +1,4 @@
+# Copyright (C) Martin Hailstone 2020-2021
 import time
 import winsound
 import logging

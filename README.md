@@ -15,7 +15,7 @@ Using (ana)conda prompt, navigate to MLAO_testing directory, and create the envi
 
 If using dm, dowload dmlib, instructions here [https://github.com/jacopoantonello/dmlib], and install dmlib. I did by running
 ``` setup.py develop```
-in each of dmlib, zernike, and devwraps folders, but in principle installing directly as per the dmlib instructions should be possible.
+in each of dmlib, zernike, and devwraps folders, but installing directly as per the dmlib instructions is possible, but be careful about which environment it is installed into.
 
 ## Running an experiment
 

@@ -65,6 +65,9 @@ def Dataset(params, kind=None):
         applied_steps = np.concatenate(
             [np.linspace(-4, -2, int(2 / step), endpoint=False), np.linspace(2 + step, 4, int(2 / step))]
         )
+    elif kind == "all":
+        log.info("full dataset")
+        applied_steps = np.linspace(-4, 4, int((4 * 2) / step) + 1)
     else:
         log.info("small ab dataset")
         applied_steps = np.linspace(-2, 2, int((2 * 2) / step) + 1)

@@ -40,16 +40,17 @@ class ScannerAOdeviceFacade(ScannerStub):
 
     def setAODeviceModes(self, ZM):
         if self._dm:
-
+            log.debug("SET DM")
             self._dm.SetDMZernikeModes(ZM)
         else:
+            log.debug("SET SLM")
             self.SetSLMZernikeModes(ZM)
 
 
 def scanner_setup(dm):
     """Initiate gRPC connection to doptical/dm and set image collection settings"""
     # SET CHANNEL(s) HERE
-    channel = grpc.insecure_channel("localhost:50051")
+    channel = grpc.insecure_channel("10.200.20.36:50051")
     if dm:
         dm_channel = grpc.insecure_channel("localhost:50052")
     else:
@@ -57,7 +58,7 @@ def scanner_setup(dm):
     scanner = ScannerAOdeviceFacade(channel, dm_channel)
 
     image_dim = (128, 128)  # set as appropriate
-    scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
+    #scanner.SetScanPixelRange(ScannerPixelRange(x=image_dim[1] + 2, y=image_dim[0] + 2))
     return image_dim, scanner
 
 
@@ -70,7 +71,7 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
         ZM = ZernikeModes(modes=[a+1 for a in aberration_modes], amplitudes=aberration)
         scanner.setAODeviceModes(ZM)
 
-        time.sleep(1.5)
+        time.sleep(0.01)#0.01
         image += capture_image(scanner)[2:, 2:]
     image = -image  # Image is inverted (also clip flyback)
     image = image[:, ::-1]  # new correct flip?

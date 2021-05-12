@@ -67,7 +67,7 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
     for _ in range(repeats):
         log.debug([np.round(a, 1) for a in aberration])
 
-        ZM = ZernikeModes(modes=aberration_modes, amplitudes=aberration)
+        ZM = ZernikeModes(modes=[a+1 for a in aberration_modes], amplitudes=aberration)
         scanner.setAODeviceModes(ZM)
 
         time.sleep(1.5)

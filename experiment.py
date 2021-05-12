@@ -135,7 +135,7 @@ def Experiment(method, params):
 
 def run_experiments(experiments):
     "Run repeatable series of experiments for testing different ML models and comparing to conventional correction"
-    params = mlao_parameters(modelno=experiments.model, correct_bias_only=experiments.correct_bias_only,)
+    params = mlao_parameters(modelno=experiments.model, correct_bias_only=experiments.correct_bias_only,dm=experiments.dm,slm=experiments.slm)
     t0 = time.time()
     log.info("----EXPERIMENTS START----")
     # calibrate: run quadratic correction for calibrate iterations

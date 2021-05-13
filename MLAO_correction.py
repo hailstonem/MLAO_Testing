@@ -345,7 +345,7 @@ def ml_estimate(params, quadratic=False):
                 [pred[i] for i in modifiable_mode_indexes],
                 it + 1,
                 brightness=np.mean(stack[0, :, :, 0]),
-                name="ml",
+                name="MQ"[quadratic],
             )
 
             tifname = folder + "/%03d_%s_%s_iterations.tif" % (rnd, mode, "MQ"[quadratic])
@@ -376,8 +376,15 @@ def ml_estimate(params, quadratic=False):
                     [np.zeros_like(pred)[i] for i in modifiable_mode_indexes],
                     it + 1,
                     brightness=np.mean(image),
-                    name="ml",
+                    name="MQ"[quadratic],
                 )
+                coeff_to_richard_json(
+                    f"{folder}/",
+                    f"{rnd:03d}_{mode}_{'MQ'[quadratic]}",
+                    tuple(start_aberrations),
+                    modifiable_modes,
+                )
+
                 jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
             brightness = np.sum(image)
             old_brightness = brightness.copy()
@@ -516,6 +523,16 @@ def coeff_to_json(filename, start_aberrations, return_modes, pred, iterations, b
         "Estimated": dict(zip(return_modes, [float(p) for p in pred])),
         "Brightness": float(brightness),
         "Type": str(name),
+    }
+    append_to_json(filename, coeffs)
+
+
+def coeff_to_richard_json(folder, name, start_aberrations, return_modes):
+    filename = f"{folder}{name}_optmised_zernike.json"
+    coeffs = {
+        "control": {"pars": {"include": [r + 1 for r in return_modes]}},
+        "output": {"optmised_zernike": [float(start_aberrations[p]) for p in return_modes]},
+        "Name": str(name),
     }
     append_to_json(filename, coeffs)
 

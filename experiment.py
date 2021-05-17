@@ -55,13 +55,16 @@ class mlao_parameters:
 
 def Dataset(params, kind=None):
 
+    """
     # Do initial correction
     params.update(
-        save_abb=True, scan=0, iter=3, use_bias_only=True, modelno=-1, experiment_name=f"_system_M-1",
+        save_abb=True, scan=0, iter=6, use_bias_only=True, modelno=-1, experiment_name=f"_system_M-1",
     )
     Experiment("quadratic", params)
+    """
     # Collect dataset
-    step = 0.5
+    params.update(load_abb=True,save_abb=False, shuffle=True)
+    step = 0.25
     if kind == "large":
         log.info("large ab dataset")
         applied_steps = np.concatenate(
@@ -74,12 +77,15 @@ def Dataset(params, kind=None):
         log.info("small ab dataset")
         applied_steps = np.linspace(-2, 2, int((2 * 2) / step) + 1)
 
-    params.update(load_abb=True, shuffle=True)
+    applied_steps = applied_steps * params.scaling
+    bias_magnitudes = [1, 2]
+    bias_magnitudes = [b * params.scaling for b in bias_magnitudes]
+
     collect_dataset(
         bias_modes=[3, 4, 5, 6, 7, 10],
         applied_modes=[4, 5, 6, 7, 10],
         applied_steps=applied_steps,
-        bias_magnitudes=[1, 2],
+        bias_magnitudes=bias_magnitudes,
         params=params,
     )
 

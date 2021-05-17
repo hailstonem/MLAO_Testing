@@ -47,6 +47,7 @@ class mlao_parameters:
         self.centerrange = 62  # 15
         self.path = ".//results"
         self.__dict__.update(kwargs)
+        self.metric = None
 
     def update(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -112,10 +113,9 @@ def Experiment(method, params):
                 log.warning(
                     "Possible missing Experiment Parameters: model, or bias_modes and bias_magnitude: falling back to model 0"
                 )
-            model = ModelWrapper(params.modelno)
 
         # jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
-        jsonfilelist = ml_estimate(params, quadratic=True)
+        jsonfilelist = ml_estimate(params, quadratic=params.metric)
         graph_exp(jsonfilelist)
 
     elif method in ["mlao", "m", "ml"]:
@@ -125,7 +125,7 @@ def Experiment(method, params):
     elif method in ["comparison", "compare", "c"]:
         jsonfilelist_ml = ml_estimate(params)
         # graph_exp(jsonfilelist_ml)
-        jsonfilelist_c = ml_estimate(params, quadratic=True)
+        jsonfilelist_c = ml_estimate(params, params.metric)
         """
         model = ModelWrapper(params.modelno)
         jsonfilelist_c = polynomial_estimate(
@@ -231,10 +231,7 @@ def run_experiments(experiments):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # parser.add_argument(
-    #    "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
-    # )
-    parser = argparse.ArgumentParser()
+
     parser.add_argument(
         "--dummy", help="runs in dummy mode without calling doptical/grpc", action="store_true"
     )
@@ -274,6 +271,10 @@ if __name__ == "__main__":
     parser.add_argument("-model", help="select model number", type=int, default=1)
     parser.add_argument(
         "-log", help="select logging level: info/debug/warning/error", type=str, default="info"
+    )
+    parser.add_argument(
+        "-metric",
+        help="select metric: region/total_intensity/max_intensity/low_spatial_frequencies_200 <- number is pixel size in nm",
     )
     parser.add_argument("-output_path", help="", type=str, default=".//results")
     args = parser.parse_args()

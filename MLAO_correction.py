@@ -5,11 +5,12 @@ import json
 import argparse
 from logging import getLogger
 import numpy as np
-from numpy.polynomial.polynomial import Polynomial, polyval
 
 import tifffile
 from calibration import get_calibration
 import grpc
+
+from metric import optimisation, MetricInterface
 
 ##dm/scanner related imports
 from dm.dm_pb2_grpc import DMStub, ScannerStub
@@ -129,28 +130,6 @@ def capture_image(scanner, timeout=5000, retry_delay=10):
     scanner.StopScan(scanner.Empty())
 
     return return_image.astype("float32")
-
-
-def Intensity_Metric(imagegen, centerpixel=50, centerrange=15):
-    """Total intensity over centre region of each image"""
-    centermin = centerpixel - centerrange
-    centermax = centerpixel + centerrange
-    intensities = [np.sum(im[centermin:centermax, centermin:centermax]) for im in imagegen]
-    return np.array(intensities)
-
-
-def optimisation(coeffarray, metric, degree_fitting=2):
-    """Polynomial fit over coeffarray range, returns maximum coefficient"""
-    new_series_fit = Polynomial.fit(coeffarray, metric, degree_fitting)
-
-    new_coeffarray = np.linspace(np.max(coeffarray), np.min(coeffarray), 101)
-
-    new_series = polyval(new_coeffarray, new_series_fit.convert().coef)
-
-    maxcoeff = new_coeffarray[np.argmax(new_series)]
-    log.debug(metric)
-
-    return maxcoeff
 
 
 class AberrationHistory:
@@ -403,15 +382,15 @@ def ml_estimate(params, quadratic=False):
 class ModelWrapper:
     """Stores model specific parameters and applied preprocessing before prediction"""
 
-    def __init__(self, model_no=1, quadratic=False):
+    def __init__(self, model_no=1, quadratic_metric=False):
         self.model = None
         self.bias_magnitude = 1
         self.model, self.subtract, self.return_modes = self.load_model(model_no)
         log.info(f"Model {model_no} loaded: return modes: {self.return_modes}")
         self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
         # override normal ml prediction and use equivalent conventional 2n+1 correction
-        self.quadratic = quadratic
-        if quadratic:
+        self.quadratic_metric = quadratic_metric
+        if quadratic_metric:
             self.return_modes = self.bias_modes
 
     def load_model(self, model_no):
@@ -455,8 +434,10 @@ class ModelWrapper:
             stack.astype("float").std(), 10e-20
         )  # prevent div/0
 
-        if self.quadratic:
-            return self.single_shot_quadratic(stack, len(self.bias_modes), self.bias_magnitude)
+        if self.quadratic_metric:
+            return self.single_shot_quadratic(
+                stack, len(self.bias_modes), self.bias_magnitude, self.quadratic_metric
+            )
 
         if self.subtract:
             stack = stack[:, :, :, 1:] - stack[:, :, :, 0:1]
@@ -482,7 +463,8 @@ class ModelWrapper:
             )
         return pred
 
-    def single_shot_quadratic(self, image, num_bias, bias_mag):
+    @staticmethod
+    def single_shot_quadratic(image, num_bias, bias_mag, metric):
         """Returns quadratic fit estimate in same format as 2n+1 MLAO"""
 
         estimate = np.zeros(num_bias)
@@ -495,10 +477,12 @@ class ModelWrapper:
                 raise NotImplementedError("fitting for multiple bias aberrations not implemented")
             else:
                 coeffarray = [0, bias_mag, -bias_mag]
+
+            metric_interface = MetricInterface(metric, image[0, :, :, b_indices[0]])
             intensities = [
-                np.mean(image[0, :, :, b_indices[0]]),
-                np.mean(image[0, :, :, b_indices[1]]),
-                np.mean(image[0, :, :, b_indices[2]]),
+                metric_interface.eval(image[0, :, :, b_indices[0]]),
+                metric_interface.eval(image[0, :, :, b_indices[1]]),
+                metric_interface.eval(image[0, :, :, b_indices[2]]),
             ]
             estimate[b] = optimisation(coeffarray, intensities)
         log.debug(f"SSQ{estimate}")

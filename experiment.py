@@ -151,6 +151,8 @@ def run_experiments(experiments):
         dm=experiments.dm,
         slm=experiments.slm,
         dummy=experiments.dummy,
+        load_abb=experiments.flat == "load",
+        save_abb=experiments.flat == "save",
     )
     t0 = time.time()
     log.info("----EXPERIMENTS START----")
@@ -281,6 +283,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-metric",
         help="select metric: region/total_intensity/max_intensity/low_spatial_frequencies_200 <- number is pixel size in nm",
+    )
+    parser.add_argument(
+        "-flat", help="load/save",
     )
     parser.add_argument("-output_path", help="", type=str, default=".//results")
     args = parser.parse_args()

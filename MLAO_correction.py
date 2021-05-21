@@ -61,7 +61,7 @@ def scanner_setup(dm, dummy):
         scanner.SetScanPixelRange(scanner.ScannerPixelRange(*image_dim))
     else:
         # SET CHANNEL(s) HERE
-        channel = grpc.insecure_channel("10.200.20.36:50051")
+        channel = grpc.insecure_channel("localhost:50051")
         if dm:
             dm_channel = grpc.insecure_channel("localhost:50052")
         else:
@@ -90,12 +90,12 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
         image += capture_image(scanner)
 
     # MCAO image orientation
-    image = np.rot90(image, 3)
-    image = -image  # Image is inverted
+    # image = np.rot90(image, 3)
+    # image = -image  # Image is inverted
 
     # Qi/2P image orientation
-    # image = -image  # Image is inverted
-    # image = image[:, ::-1]  # new correct flip?
+    image = -image  # Image is inverted
+    image = image[:, ::-1]  # new correct flip?
 
     return image
 

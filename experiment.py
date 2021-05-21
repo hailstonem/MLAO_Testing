@@ -61,7 +61,7 @@ def Dataset(params, kind=None):
     )
     Experiment("quadratic", params)
     # Collect dataset
-    step = 0.5
+    step = 0.25
     if kind == "large":
         log.info("large ab dataset")
         applied_steps = np.concatenate(

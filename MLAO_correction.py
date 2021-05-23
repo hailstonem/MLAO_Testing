@@ -83,9 +83,9 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
         ZM = scanner.ZernikeModes(modes=[a + 1 for a in aberration_modes], amplitudes=aberration)
         scanner.setAODeviceModes(ZM)
 
-        # time.sleep(1.5)  # 0.01 #Empirical SLM refresh time (+capture)
+        time.sleep(1.5)  # 0.01 #Empirical SLM refresh time (+capture?)
 
-        time.sleep(0.01)  # 0.01 #Safe DM refresh
+        # time.sleep(0.01)  # 0.01 #Safe DM refresh
 
         image += capture_image(scanner)
 

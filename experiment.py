@@ -38,6 +38,7 @@ class mlao_parameters:
         self.use_calibration = False
         self.negative = False
         self.factor = 1
+        self.scaling = 1  # Scaling factor for wavelength changes for generating aberrations TODO: Apply to closed loop experiments
         self.repeats = 1
         self.magnitude = 1.5
         self.modelno = 0

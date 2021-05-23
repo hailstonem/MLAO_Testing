@@ -264,10 +264,17 @@ if __name__ == "__main__":
         type=int,
         default=0,
     )
-    parser.add_argument("-scan_bias", help="", type=float, default=0)
-    parser.add_argument("-scan_all", help="", type=float, default=0)
-    parser.add_argument("-dataset", help="", type=str, default="")
-    parser.add_argument("--no_beep", help="disable beeping", action="store_true")
+    parser.add_argument(
+        "-scan_bias",
+        help="run through applying starting aberration for each bias aberration size SCAN_BIAS and attempt to correct",
+        type=float,
+        default=0,
+    )
+    parser.add_argument(
+        "-scan_all", help="run through all modes with applied SCAN_ALL aberration", type=float, default=0,
+    )
+    parser.add_argument("-dataset", help="one of large/small/all", type=str, default="")
+    parser.add_argument("--no_beep", help="disable beeping on complete", action="store_true")
     parser.add_argument(
         "--correct_bias_only", help="ignore model estimates other than bias modes", action="store_true",
     )
@@ -284,9 +291,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-metric",
         help="select metric: region/total_intensity/max_intensity/low_spatial_frequencies_200 <- number is pixel size in nm",
+        default="total_intensity",
+        type=str,
     )
     parser.add_argument(
-        "-flat", help="load/save",
+        "-flat", help="load/save", default=None, type=str,
+    )
+    parser.add_argument(
+        "-replicates", help="repeat experiment n times", default=1, type=int,
     )
     parser.add_argument("-output_path", help="", type=str, default=".//results")
     args = parser.parse_args()

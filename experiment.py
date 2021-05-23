@@ -166,7 +166,7 @@ def run_experiments(experiments):
             experiment_name=f"_system_M{experiments.model}",
         )
         Experiment("quadratic", params)
-        log.info(f"----QUADRATIC ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
+        log.info(f"----SYSTEM ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
     # Stability: scan 0 use bias_only 15 iterations
     if experiments.stability:
         params.update(scan=0, iter=18, experiment_name=f"_stability_M{experiments.model}")

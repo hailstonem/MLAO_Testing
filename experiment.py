@@ -38,7 +38,9 @@ class mlao_parameters:
         self.use_calibration = False
         self.negative = False
         self.factor = 1
-        self.scaling = 1  # Scaling factor for wavelength changes for generating aberrations TODO: Apply to closed loop experiments
+        self.scaling = 1 / (
+            640 / 770
+        )  # Scaling factor for wavelength changes for generating aberrations TODO: Apply to closed loop experiments
         self.repeats = 1
         self.magnitude = 1.5
         self.modelno = 0
@@ -64,7 +66,7 @@ def Dataset(params, kind=None):
     Experiment("quadratic", params)
     """
     # Collect dataset
-    params.update(load_abb=True,save_abb=False, shuffle=True)
+    params.update(load_abb=True, save_abb=False, shuffle=True)
     step = 0.25
     if kind == "large":
         log.info("large ab dataset")

@@ -10,7 +10,7 @@ try:
     IMAGEGEN = True
 except ImportError:
     IMAGEGEN = False
-    raise RuntimeWarning("Dummy mode: Cannot find imagegen, defaulting to np.random")
+    print("Dummy mode: Cannot find imagegen, defaulting to np.random")
 
 
 class Empty:

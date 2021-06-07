@@ -80,7 +80,7 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
     for _ in range(repeats):
         log.debug([np.round(a, 1) for a in aberration])
 
-        ZM = scanner.ZernikeModes(modes=[a + 1 for a in aberration_modes], amplitudes=aberration)
+        ZM = scanner.ZernikeModes(modes=[a for a in aberration_modes], amplitudes=aberration)
         scanner.setAODeviceModes(ZM)
 
         time.sleep(1.5)  # 0.01 #Empirical SLM refresh time (+capture?)

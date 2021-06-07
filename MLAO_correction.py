@@ -95,6 +95,7 @@ def set_ao_and_capture_image(scanner, image_dim, aberration, aberration_modes, r
 
     # Qi/2P image orientation
     image = -image  # Image is inverted
+    image = np.rot90(image, 1)
     image = image[:, ::-1]  # new correct flip?
 
     return image

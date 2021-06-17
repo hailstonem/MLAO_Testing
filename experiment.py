@@ -47,8 +47,8 @@ class mlao_parameters:
         # self.centerpixel = 64
         self.centerrange = 62  # 15
         self.path = ".//results"
-        self.__dict__.update(kwargs)
         self.metric = None
+        self.__dict__.update(kwargs)
 
     def update(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -118,10 +118,12 @@ def Experiment(method, params):
         if not (params.bias_modes and params.bias_magnitude):
             if not params.modelno:
                 log.warning(
-                    "Possible missing Experiment Parameters: model, or bias_modes and bias_magnitude: falling back to model 0"
+                    "Possible missing Experiment Parameters: model, or bias_modes and bias_magnitude: missing modelno may cause failures"
                 )
+                params.modelno = None
 
         # jsonfilelist = polynomial_estimate(model.bias_modes, model.return_modes, model.bias_magnitude, params)
+        assert params.metric != None
         jsonfilelist = ml_estimate(params, quadratic=params.metric)
         graph_exp(jsonfilelist)
 
@@ -132,7 +134,8 @@ def Experiment(method, params):
     elif method in ["comparison", "compare", "c"]:
         jsonfilelist_ml = ml_estimate(params)
         # graph_exp(jsonfilelist_ml)
-        jsonfilelist_c = ml_estimate(params, params.metric)
+        assert params.metric != None
+        jsonfilelist_c = ml_estimate(params, quadratic=params.metric)
         """
         model = ModelWrapper(params.modelno)
         jsonfilelist_c = polynomial_estimate(
@@ -150,6 +153,7 @@ def run_experiments(experiments):
         modelno=experiments.model,
         correct_bias_only=experiments.correct_bias_only,
         dm=experiments.dm,
+        metric=experiments.metric,
         slm=experiments.slm,
         dummy=experiments.dummy,
         load_abb=experiments.flat == "load",
@@ -290,6 +294,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-output_path", help="", type=str, default=".//results")
     args = parser.parse_args()
+
     log = getLogger("mlao_log")
     handler = logging.StreamHandler(sys.stdout)
     # handler.setLevel(logging.DEBUG)

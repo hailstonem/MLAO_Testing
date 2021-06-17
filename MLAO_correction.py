@@ -287,7 +287,7 @@ def ml_estimate(params, quadratic=False):
                     scanner, image_dim, aberration, aberration_modes, params.repeats
                 )
 
-                temptifname = folder + "/%03d_%s_%s_temp_%s.tif" % (rnd, mode, it, "MQ"[quadratic == True])
+                temptifname = folder + "/%03d_%s_%s_temp_%s.tif" % (rnd, mode, it, "MQ"[quadratic != False])
                 save_tif(temptifname, image)
 
                 if image is None:
@@ -312,7 +312,7 @@ def ml_estimate(params, quadratic=False):
                 log.info(f"Mode {mode} Applied; Estimate = {str(pred[return_modes.index(mode)])}")
 
             # save to json and tif
-            jsonfile = f"{folder}/{rnd:03d}_{mode}_{'MQ'[quadratic==True]}_coefficients.json"
+            jsonfile = f"{folder}/{rnd:03d}_{mode}_{'MQ'[quadratic != False]}_coefficients.json"
 
             # if not params.correct_bias_only:
             #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
@@ -324,10 +324,10 @@ def ml_estimate(params, quadratic=False):
                 [pred[i] for i in modifiable_mode_indexes],
                 it + 1,
                 brightness=np.mean(stack[0, :, :, 0]),
-                name="MQ"[quadratic == True],
+                name="MQ"[quadratic != False],
             )
 
-            tifname = folder + "/%03d_%s_%s_iterations.tif" % (rnd, mode, "MQ"[quadratic == True])
+            tifname = folder + "/%03d_%s_%s_iterations.tif" % (rnd, mode, "MQ"[quadratic != False])
             save_tif(tifname, stack[0, :, :, 0].astype("float32"))  # /stack[0, :, :, 0].max())
 
             acc_pred += pred
@@ -355,11 +355,11 @@ def ml_estimate(params, quadratic=False):
                     [np.zeros_like(pred)[i] for i in modifiable_mode_indexes],
                     it + 1,
                     brightness=np.mean(image),
-                    name="MQ"[quadratic == True],
+                    name="MQ"[quadratic != False],
                 )
                 coeff_to_richard_json(
                     f"{folder}/",
-                    f"{rnd:03d}_{mode}_{'MQ'[quadratic==True]}",
+                    f"{rnd:03d}_{mode}_{'MQ'[quadratic != False]}",
                     tuple(start_aberrations),
                     modifiable_modes,
                 )

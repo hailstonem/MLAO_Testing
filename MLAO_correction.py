@@ -209,10 +209,12 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         )
 
 
-def ml_estimate(params, quadratic=False):
+def ml_estimate(params, quadratic=None):
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 
     params should specify correct_bias_only load_abb and save_abb"""
 
+    mq = "M" if quadratic is None else "Q"
+    log.debug(f"{mq}:{quadratic}")
     rnd = time_prefix()
     folder = f"{params.path}/" + time.strftime("%y%m%" + "d") + params.experiment_name
     if not os.path.exists(folder):
@@ -287,7 +289,7 @@ def ml_estimate(params, quadratic=False):
                     scanner, image_dim, aberration, aberration_modes, params.repeats
                 )
 
-                temptifname = folder + "/%03d_%s_%s_temp_%s.tif" % (rnd, mode, it, "MQ"[quadratic != False])
+                temptifname = folder + "/%03d_%s_%s_temp_%s.tif" % (rnd, mode, it, mq)
                 save_tif(temptifname, image)
 
                 if image is None:
@@ -304,7 +306,7 @@ def ml_estimate(params, quadratic=False):
                 folder + "/%03d_%s_full_stack.tif" % (rnd, mode), np.rollaxis(stack.astype("float32"), 3, 1)
             )"""
 
-            pred = [x / params.factor for x in model.predict(stack, quadratic, split=False)]
+            pred = [x / params.factor for x in model.predict(stack, split=False)]
             if params.use_calibration:
                 pred = pred + 0.9 * calibration
 
@@ -312,7 +314,7 @@ def ml_estimate(params, quadratic=False):
                 log.info(f"Mode {mode} Applied; Estimate = {str(pred[return_modes.index(mode)])}")
 
             # save to json and tif
-            jsonfile = f"{folder}/{rnd:03d}_{mode}_{'MQ'[quadratic != False]}_coefficients.json"
+            jsonfile = f"{folder}/{rnd:03d}_{mode}_{mq}_coefficients.json"
 
             # if not params.correct_bias_only:
             #    coeff_to_json(jsonfile, start_aberrations, return_modes, pred, it + 1)
@@ -324,10 +326,10 @@ def ml_estimate(params, quadratic=False):
                 [pred[i] for i in modifiable_mode_indexes],
                 it + 1,
                 brightness=np.mean(stack[0, :, :, 0]),
-                name="MQ"[quadratic != False],
+                name=mq,
             )
 
-            tifname = folder + "/%03d_%s_%s_iterations.tif" % (rnd, mode, "MQ"[quadratic != False])
+            tifname = folder + "/%03d_%s_%s_iterations.tif" % (rnd, mode, mq)
             save_tif(tifname, stack[0, :, :, 0].astype("float32"))  # /stack[0, :, :, 0].max())
 
             acc_pred += pred
@@ -355,13 +357,10 @@ def ml_estimate(params, quadratic=False):
                     [np.zeros_like(pred)[i] for i in modifiable_mode_indexes],
                     it + 1,
                     brightness=np.mean(image),
-                    name="MQ"[quadratic != False],
+                    name=mq,
                 )
                 coeff_to_richard_json(
-                    f"{folder}/",
-                    f"{rnd:03d}_{mode}_{'MQ'[quadratic != False]}",
-                    tuple(start_aberrations),
-                    modifiable_modes,
+                    f"{folder}/", f"{rnd:03d}_{mode}_{mq}", tuple(start_aberrations), modifiable_modes,
                 )
 
                 jsonfilelist.append((jsonfile, "%03d_%s" % (rnd, mode)))
@@ -382,7 +381,7 @@ def ml_estimate(params, quadratic=False):
 class ModelWrapper:
     """Stores model specific parameters and applied preprocessing before prediction"""
 
-    def __init__(self, model_no=1, quadratic_metric=False):
+    def __init__(self, model_no=1, quadratic_metric=None):
         self.model = None
         self.bias_magnitude = 1
         self.model, self.subtract, self.return_modes = self.load_model(model_no)
@@ -390,8 +389,10 @@ class ModelWrapper:
         self.bias_modes = [4, 5, 6, 7, 10]  ### Bias modes
         # override normal ml prediction and use equivalent conventional 2n+1 correction
         self.quadratic_metric = quadratic_metric
-        if quadratic_metric:
+        if quadratic_metric is not None:
             self.return_modes = self.bias_modes
+            self.model = None
+            log.info("Using QUADRATIC method")
 
     def load_model(self, model_no):
         log.debug("loading model")
@@ -434,7 +435,7 @@ class ModelWrapper:
             stack.astype("float").std(), 10e-20
         )  # prevent div/0
 
-        if self.quadratic_metric:
+        if self.quadratic_metric is not None:
             return self.single_shot_quadratic(
                 stack, len(self.bias_modes), self.bias_magnitude, self.quadratic_metric
             )

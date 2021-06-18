@@ -49,8 +49,8 @@ class mlao_parameters:
         # self.centerpixel = 64
         self.centerrange = 62  # 15
         self.path = ".//results"
-        self.__dict__.update(kwargs)
         self.metric = None
+        self.__dict__.update(kwargs)
 
     def update(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -152,6 +152,7 @@ def run_experiments(experiments):
         modelno=experiments.model,
         correct_bias_only=experiments.correct_bias_only,
         dm=experiments.dm,
+        metric=experiments.metric,
         slm=experiments.slm,
         dummy=experiments.dummy,
         load_abb=experiments.flat == "load",

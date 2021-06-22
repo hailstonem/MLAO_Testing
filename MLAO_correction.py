@@ -264,7 +264,7 @@ def ml_estimate(params, quadratic=None):
             log.debug("abberation loaded")
 
         if mode == 0:
-            random_starting_aberration = np.random.rand(len(bias_modes))
+            random_starting_aberration = params.random_coe[:]
             random_starting_aberration /= np.sqrt(np.sum(random_starting_aberration**2))
             random_starting_aberration *= params.magnitude
             for i in range(len(bias_modes)):

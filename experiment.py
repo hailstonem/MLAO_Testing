@@ -209,6 +209,7 @@ def run_experiments(experiments):
             scan=-3,
             iter=5,
             magnitude=experiments.random,
+            random_coe=np.random.rand(5),
             use_bias_only=True,
             experiment_name=f"_random_M{experiments.model}",
         )

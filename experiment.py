@@ -203,6 +203,18 @@ def run_experiments(experiments):
 
         Experiment(experiments.method, params)
         log.info(f"----SCAN BIAS ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
+    # Random Abb: 
+    if experiments.random:
+        params.update(
+            scan=-3,
+            iter=5,
+            magnitude=experiments.random,
+            use_bias_only=True,
+            experiment_name=f"_random_M{experiments.model}",
+        )
+
+        Experiment(experiments.method, params)
+        log.info(f"----SCAN BIAS ESTIMATION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
     # Small aberration regime:
     # full range scan through modes
     if experiments.scan_all:
@@ -259,6 +271,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "-scan_bias",
         help="run through applying starting aberration for each bias aberration size SCAN_BIAS and attempt to correct",
+        type=float,
+        default=0,
+    )
+    parser.add_argument(
+        "-random",
+        help="Apply random starting aberration for a combined RMS specified and attempt to correct",
         type=float,
         default=0,
     )

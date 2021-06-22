@@ -234,6 +234,8 @@ def ml_estimate(params, quadratic=None):
         scan_modes = return_modes
     elif params.scan == -2:
         scan_modes = bias_modes
+    elif params.scan == -3:
+        scan_modes = [0]
     else:
         scan_modes = [params.scan]
     log.debug(f"scan modes: {scan_modes}")
@@ -261,8 +263,16 @@ def ml_estimate(params, quadratic=None):
             start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
             log.debug("abberation loaded")
 
-        if mode:
+        if mode == 0:
+            random_starting_aberration = np.random.rand(len(bias_modes))
+            random_starting_aberration /= np.sqrt(np.sum(random_starting_aberration**2))
+            random_starting_aberration *= params.magnitude
+            for i in range(len(bias_modes)):
+                start_aberrations[bias_modes[i]] += random_starting_aberration[i]
+            
+        else:
             start_aberrations[mode] += params.magnitude
+        
 
         acc_pred = np.zeros(len(return_modes))
         old_brightness = 0

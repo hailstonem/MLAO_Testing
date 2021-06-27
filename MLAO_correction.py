@@ -209,6 +209,61 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
             temptifname, np.moveaxis(stack, 2, 0),
         )
 
+def collect_random_dataset(params,save):
+    """short dataset collection experiment"""
+
+    def generateAbb(bias_modes, applied_modes, applied_steps, bias_magnitudes, init_aberrations=None):
+        """Returns each list of bias aberrations for AO device to apply- based on cockpit data collection"""
+        if init_aberrations is None:
+            init_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
+
+        for applied_abb in applied_modes:
+            for step in applied_steps:
+                current_aberrations = init_aberrations.copy()  # don't reuse same object!
+                current_aberrations[applied_abb] += step
+                biaslist = make_bias_polytope(
+                    current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
+                )
+                fprefix = f"A{applied_abb}S{step:.1f}_"
+                yield biaslist, fprefix
+
+    ## outputfolder
+    folder = f"{params.path}/" + time.strftime("%y_%m_%" + "d_RandomDataset_%H%M")
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    ## Set up scan
+    image_dim, scanner = scanner_setup(params.dm, params.dummy)
+    ## load system correction
+    start_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
+    if params.load_abb:
+        start_aberrations = load_start_abb("./start_abb.json", start_aberrations)
+        log.debug("initial aberration loaded")
+
+    ## collect dataset using corrected starting point
+    for biaslist, fprefix in generateAbb(
+        bias_modes, applied_modes, applied_steps, bias_magnitudes, start_aberrations
+    ):
+        log.info(f"current abb: {fprefix}")
+
+        shuffled_order = np.arange(len(biaslist))
+        if params.shuffle:
+            np.random.shuffle(shuffled_order)
+
+        # Get stack of images
+        stack = np.zeros((image_dim[0], image_dim[1], len(biaslist)), dtype="float32")
+        for i_image in shuffled_order:
+            aberration = biaslist[i_image]
+            log.debug(f"{aberration}")
+            image = set_ao_and_capture_image(
+                scanner, image_dim, aberration, np.arange(len(aberration)), params.repeats
+            )
+            stack[:, :, i_image] = image
+
+        temptifname = f"{folder}{os.sep}{fprefix}.tif"
+        save_tif(
+            temptifname, np.moveaxis(stack, 2, 0),
+        )
 
 def ml_estimate(params, quadratic=None):
     """Runs ML estimation over a series of modes, printing the estimate of each mode and it's actual value. 

@@ -7,7 +7,7 @@ import argparse
 import sys
 import os
 import numpy as np
-from MLAO_correction import ml_estimate, collect_dataset  # polynomial_estimate,
+from MLAO_correction import ml_estimate, collect_dataset, collect_random_dataset  # polynomial_estimate,
 
 from pathlib import Path
 from graph_results import graph, graph_compare
@@ -90,6 +90,9 @@ def Dataset(params, kind=None):
         params=params,
     )
 
+def RandomDataset(params,save = 1):
+    params.update(load_abb=True, save_abb=False, shuffle=False)
+    collect_random_dataset(params=params,save)
 
 def Experiment(method, params):
     def graph_exp(jsonfilelist):
@@ -239,6 +242,18 @@ def run_experiments(experiments):
 
         Dataset(params, experiments.dataset)
         log.info(f"----DATASET COLLECTION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
+    # Random dataset collection regime:
+    if experiments.random_dataset:
+        params.update(
+            scan=-1,
+            iter=5,
+            magnitude=experiments.random_dataset,
+            use_bias_only=False,
+            experiment_name=f"_RandomDataset_R{experiments.random_dataset_aberration}",
+        )
+
+        RandomDataset(params,experiments.random_dataset_aberration)
+        log.info(f"----DATASET COLLECTION COMPLETE T={(time.time()-t0)/60:0.1f} min----")
 
     log.info(f"----EXPERIMENTS COMPLETE T={(time.time()-t0)/60:0.1f} min----")
 
@@ -285,6 +300,7 @@ if __name__ == "__main__":
         "-scan_all", help="run through all modes with applied SCAN_ALL aberration", type=float, default=0,
     )
     parser.add_argument("-dataset", help="one of large/small/all", type=str, default="")
+    parser.add_argument("-random_dataset",help="Collecting data when aberration is randomly added",type=float, default=1)
     parser.add_argument("--no_beep", help="disable beeping on complete", action="store_true")
     parser.add_argument(
         "--correct_bias_only", help="ignore model estimates other than bias modes", action="store_true",
@@ -307,6 +323,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-flat", help="load/save", default=None, type=str,
+    )
+    parser.add_argument(
+        "-random_dataset_aberration", 
+        help="If 0, load the aberration saved from the previous experiment; else, generate and save a number of random aberrations", 
+        default=1, type=int,
     )
     parser.add_argument(
         "-replicates", help="repeat experiment n times", default=1, type=int,

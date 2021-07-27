@@ -169,7 +169,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
             for i in range(len(applied_steps)):
                 current_aberrations = init_aberrations.copy()  # don't reuse same object!
                 for ii in range(len(applied_steps[i])):
-                    current_aberrations[applied_modes[ii]] += applied_steps[i][ii]
+                    current_aberrations[applied_modes[ii]] += applied_steps[i,ii]
                 biaslist = make_bias_polytope(
                     current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
                 )
@@ -185,7 +185,7 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
             for i in range(len(applied_steps)):
                 current_aberrations = init_aberrations.copy()  # don't reuse same object!
                 for ii in range(len(applied_steps[i])):
-                    current_aberrations[applied_modes[ii]] += applied_steps[i][ii]
+                    current_aberrations[applied_modes[ii]] += applied_steps[i,ii]
                 biaslist = make_bias_polytope(
                     current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
                 )

@@ -294,7 +294,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-scan_all", help="run through all modes with applied SCAN_ALL aberration", type=float, default=0,
     )
-    parser.add_argument("-dataset", help="one of large/small/all/random_save/ramdom_load", type=str, default="")
+    parser.add_argument("-dataset", help="one of large/small/all/random_save/random_load", type=str, default="")
     parser.add_argument("--no_beep", help="disable beeping on complete", action="store_true")
     parser.add_argument(
         "--correct_bias_only", help="ignore model estimates other than bias modes", action="store_true",

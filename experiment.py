@@ -72,24 +72,36 @@ def Dataset(params, kind=None):
             [np.linspace(-4, -2, int(2 / step), endpoint=False), np.linspace(2 + step, 4, int(2 / step))]
         )
         bias_modes=[3, 4, 5, 6, 7, 10]
+        bias_magnitudes = [0.5]
     elif kind == "all":
         log.info("full dataset")
         applied_steps = np.linspace(-4, 4, int((4 * 2) / step) + 1)
         bias_modes=[3, 4, 5, 6, 7, 10]
+        bias_magnitudes = [0.5]
     elif kind == "random_save":
-        log.info("Generate 50 different sets of ab and saved")
-        applied_steps = 2*np.random.random([50,5])-1
-        bias_modes=[3]
+        log.info("Generate 20 different sets of ab and saved")
+        # applied_steps = np.random.random([20,5])/2+0.5
+        # applied_steps = applied_steps*np.random.choice([1,-1],size = [20,5])
+        applied_steps = np.random.random([20,5])-0.5
+        bias_modes=[3,4,5,6,7,10]
+        bias_magnitudes = [0.5,1.0]
     elif kind == "random_load":
-        log.info("Load the 50 sets of ab")
-        applied_steps = np.random.random([50,5])
-        bias_modes=[3]
+        log.info("Load the 20 sets of ab")
+        applied_steps = np.random.random([20,5])
+        bias_modes=[3,4,5,6,7,10]
+        bias_magnitudes = [0.5,1.0]
+    elif kind =="zero_all_modes":
+        log.info("ab is zero. Scan all modes.")
+        applied_steps = np.zeros((1,5))
+        bias_modes=[3,4,5,6,7,10]
+        bias_magnitudes = [2.0]
     else:
         log.info("small ab dataset")
         applied_steps = np.linspace(-2, 2, int((2 * 2) / step) + 1)
         bias_modes=[3, 4, 5, 6, 7, 10]
+        bias_magnitudes = [0.5]
     applied_steps = applied_steps * params.scaling
-    bias_magnitudes = [0.1,0.2,0.5,1,2]
+    
     bias_magnitudes = [b * params.scaling for b in bias_magnitudes]
 
     collect_dataset(
@@ -294,7 +306,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-scan_all", help="run through all modes with applied SCAN_ALL aberration", type=float, default=0,
     )
-    parser.add_argument("-dataset", help="one of large/small/all/random_save/random_load", type=str, default="")
+    parser.add_argument("-dataset", help="one of large/small/all/random_save/random_load/zero_all_modes", type=str, default="")
     parser.add_argument("--no_beep", help="disable beeping on complete", action="store_true")
     parser.add_argument(
         "--correct_bias_only", help="ignore model estimates other than bias modes", action="store_true",

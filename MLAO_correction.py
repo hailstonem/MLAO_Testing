@@ -162,30 +162,45 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
             init_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
         if kind == "random_save":
             with open("./save_abb.json", "w") as cofile:
-                ab_num = [i for i in range(50)]
+                ab_num = [i for i in range(20)]
                 data = dict(zip(ab_num,[p.ravel().tolist() for p in applied_steps[ab_num]]))
                 # print(data)
                 json.dump(data, cofile, indent=1)
             for i in range(len(applied_steps)):
                 current_aberrations = init_aberrations.copy()  # don't reuse same object!
                 for ii in range(len(applied_steps[i])):
-                    current_aberrations[applied_modes[ii]] += applied_steps[i,ii]
+                    current_aberrations[applied_modes[ii]] += applied_steps[i][ii]
                 biaslist = make_bias_polytope(
                     current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
                 )
-                fprefix = f"Random_save_A{i}_"
+                fprefix = f"Random_load_A{i}_"
+                yield biaslist, fprefix
+        elif kind == "zero_all_modes":
+            # with open("./save_abb.json", "w") as cofile:
+            #     ab_num = [i for i in range(50)]
+            #     data = dict(zip(ab_num,[p.ravel().tolist() for p in applied_steps[ab_num]]))
+            #     # print(data)
+            #     json.dump(data, cofile, indent=1)
+            for i in range(len(applied_steps)):
+                current_aberrations = init_aberrations.copy()  # don't reuse same object!
+                for ii in range(len(applied_steps[i])):
+                    current_aberrations[applied_modes[ii]] += applied_steps[i][ii]
+                biaslist = make_bias_polytope(
+                    current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
+                )
+                fprefix = f"Random_load_A{i}_"
                 yield biaslist, fprefix
         elif kind == "random_load":
             with open("./save_abb.json", "r") as cofile:
                 data = json.load(cofile)
-                applied_steps = np.zeros((50,5))
+                applied_steps = np.zeros((20,5))
                 for k, v in data.items():
                     applied_steps[int(k)] = v.copy()
                     # print(int(k),': ',applied_steps[int(k)])
             for i in range(len(applied_steps)):
                 current_aberrations = init_aberrations.copy()  # don't reuse same object!
                 for ii in range(len(applied_steps[i])):
-                    current_aberrations[applied_modes[ii]] += applied_steps[i,ii]
+                    current_aberrations[applied_modes[ii]] += applied_steps[i][ii]
                 biaslist = make_bias_polytope(
                     current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
                 )

@@ -160,7 +160,22 @@ def collect_dataset(bias_modes, applied_modes, applied_steps, bias_magnitudes, p
         """Returns each list of bias aberrations for AO device to apply- based on cockpit data collection"""
         if init_aberrations is None:
             init_aberrations = np.zeros(np.max((np.max(bias_modes), (np.max(applied_modes)))) + 1)
-        if kind == "random_save_large" or "random_save_small":
+        if kind == "random_save_large":
+            with open("./save_abb.json", "w") as cofile:
+                ab_num = [i for i in range(20)]
+                data = dict(zip(ab_num,[p.ravel().tolist() for p in applied_steps[ab_num]]))
+                # print(data)
+                json.dump(data, cofile, indent=1)
+            for i in range(len(applied_steps)):
+                current_aberrations = init_aberrations.copy()  # don't reuse same object!
+                for ii in range(len(applied_steps[i])):
+                    current_aberrations[applied_modes[ii]] += applied_steps[i][ii]
+                biaslist = make_bias_polytope(
+                    current_aberrations, bias_modes, len(current_aberrations), steps=bias_magnitudes
+                )
+                fprefix = f"Random_load_A{i}_"
+                yield biaslist, fprefix
+        elif kind =="random_save_small":
             with open("./save_abb.json", "w") as cofile:
                 ab_num = [i for i in range(20)]
                 data = dict(zip(ab_num,[p.ravel().tolist() for p in applied_steps[ab_num]]))

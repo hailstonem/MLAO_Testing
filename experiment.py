@@ -96,12 +96,13 @@ def Dataset(params, kind=None):
         log.info("Load the 20 sets of ab")
         applied_steps = np.random.random([20,5])
         bias_modes=[3,4,5,6,7,10]
-        bias_magnitudes = [0.5,1.0]
+        bias_magnitudes = [1.0]
     elif kind =="zero_all_modes":
         log.info("ab is zero. Scan all modes.")
-        applied_steps = np.zeros((1,5))
+        # applied_steps = np.zeros((1,5))
+        applied_steps = np.array([[1,2,3,4,5]])
         bias_modes=[3,4,5,6,7,10]
-        bias_magnitudes = [2.0]
+        bias_magnitudes = [1.0]
     else:
         log.info("small ab dataset")
         applied_steps = np.linspace(-2, 2, int((2 * 2) / step) + 1)
